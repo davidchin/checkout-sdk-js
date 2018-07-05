@@ -35,6 +35,7 @@ import {
 import { AfterpayScriptLoader } from './strategies/afterpay';
 import { AmazonPayScriptLoader } from './strategies/amazon-pay';
 import { createBraintreePaymentProcessor, createBraintreeVisaCheckoutPaymentProcessor, VisaCheckoutScriptLoader } from './strategies/braintree';
+import { ChasepayPaymentStrategy, ChasePayScriptLoader } from './strategies/chasepay';
 import { KlarnaScriptLoader } from './strategies/klarna';
 import { PaypalScriptLoader } from './strategies/paypal';
 import { SquareScriptLoader } from './strategies/square';
@@ -49,7 +50,7 @@ export default function createPaymentStrategyRegistry(
     const registry = new PaymentStrategyRegistry(store, { defaultToken: 'creditcard' });
     const scriptLoader = getScriptLoader();
     const braintreePaymentProcessor = createBraintreePaymentProcessor(scriptLoader);
-
+    const configActionCreator = new ConfigActionCreator(new ConfigRequestSender(requestSender));
     const checkoutRequestSender = new CheckoutRequestSender(requestSender);
     const checkoutValidator = new CheckoutValidator(checkoutRequestSender);
     const orderActionCreator = new OrderActionCreator(client, checkoutValidator);
@@ -217,6 +218,20 @@ export default function createPaymentStrategyRegistry(
             orderActionCreator,
             createBraintreeVisaCheckoutPaymentProcessor(scriptLoader, requestSender),
             new VisaCheckoutScriptLoader(scriptLoader)
+        )
+    );
+
+    registry.register('chasepay', () =>
+        new ChasepayPaymentStrategy(
+            store,
+            paymentMethodActionCreator,
+            new ChasePayScriptLoader(getScriptLoader()),
+            paymentActionCreator,
+            orderActionCreator,
+            requestSender,
+            new WepayRiskClient(scriptLoader),
+            new PaymentStrategyActionCreator(registry, orderActionCreator),
+            new CheckoutActionCreator(checkoutRequestSender, configActionCreator)
         )
     );
 

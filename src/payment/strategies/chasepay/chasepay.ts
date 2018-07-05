@@ -16,6 +16,20 @@ export interface ChasePaySuccessPayload {
     sessionToken: string;
 }
 
+export interface ChasePayInsertOptions {
+    color?: string;
+    containers?: [string | undefined];
+    height?: number;
+    width?: number;
+}
+
+export interface ChasePayConfigureOptions {
+    language?: string;
+    zindex?: number;
+    sessionWarningTime?: number;
+    sessionTimeoutTime?: number;
+}
+
 export interface ChasePay {
     EventType: {
         START_CHECKOUT: 'START_CHECKOUT';
@@ -23,7 +37,10 @@ export interface ChasePay {
         CANCEL_CHECKOUT: 'CANCEL_CHECKOUT';
     };
     isChasePayUp(): boolean;
-    insertButtons(options: any): void;
+    insertButtons(options: ChasePayInsertOptions): void;
+    insertBrandings(options: ChasePayInsertOptions): void;
     startCheckout(digitalSessionId?: string): void;
+    showLoadingAnimation(): void;
+    configure(options: ChasePayConfigureOptions): void;
     on<ChasePayEventType extends keyof ChasePayEventMap>(eventType: ChasePayEventType, callback: ChasePayEventMap[ChasePayEventType]): {};
 }
