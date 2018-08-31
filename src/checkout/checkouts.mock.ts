@@ -4,7 +4,7 @@ import { getCart } from '../cart/carts.mock';
 import { getCartState } from '../cart/carts.mock';
 import { getCheckoutButtonState } from '../checkout-buttons/checkout-buttons.mock';
 import { getConfigState } from '../config/configs.mock';
-import { getCoupon, getCouponsState } from '../coupon/coupons.mock';
+import { getCoupon, getCouponsState, getShippingCoupon } from '../coupon/coupons.mock';
 import { getGiftCertificate, getGiftCertificatesState } from '../coupon/gift-certificates.mock';
 import { getCustomer, getCustomerState } from '../customer/customers.mock';
 import { getCustomerStrategyState } from '../customer/internal-customers.mock';
@@ -79,7 +79,7 @@ export function getCheckoutWithCoupons(): Checkout {
         ...getCheckout(),
         coupons: [
             getCoupon(),
-            getCoupon(),
+            getShippingCoupon(),
         ],
     };
 }
@@ -89,6 +89,7 @@ export function getCheckoutWithGiftCertificates(): Checkout {
         ...getCheckout(),
         giftCertificates: [
             getGiftCertificate(),
+            { ...getGiftCertificate(), code: 'gc2' },
         ],
     };
 }
