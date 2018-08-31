@@ -1042,6 +1042,7 @@ declare class CheckoutService {
 
 declare interface CheckoutServiceOptions {
     locale?: string;
+    host?: string;
     shouldWarnMutation?: boolean;
 }
 
