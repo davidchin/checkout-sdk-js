@@ -18,7 +18,7 @@ export interface ChasePaySuccessPayload {
 
 export interface ChasePayInsertOptions {
     color?: string;
-    containers?: [string | undefined];
+    containers?: string[];
     height?: number;
     width?: number;
 }

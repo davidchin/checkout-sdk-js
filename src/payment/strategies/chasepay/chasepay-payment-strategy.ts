@@ -100,12 +100,11 @@ export default class ChasepayPaymentStrategy extends PaymentStrategy {
         return this._getPaymentData(payment.methodId,
             initializationData.digitalSessionId,
             config.testMode,
-            this._processPayment(payment, paymentData, order, options))
-            .then(() => super.initialize(options));
+            () => this._processPayment(payment, paymentData, order, options));
     }
 
     deinitialize(options?: PaymentRequestOptions): Promise<InternalCheckoutSelectors> {
-        if (this._button && options) {
+        if (this._button) {
             this._button.removeEventListener('click', this._handleWalletButtonClick);
         }
 
@@ -127,7 +126,7 @@ export default class ChasepayPaymentStrategy extends PaymentStrategy {
             });
     }
 
-    private _getPaymentData(methodId: string, digitalSessionId: string, testMode: boolean | undefined, onPaymentSelect: any): Promise<void> {
+    private _getPaymentData(methodId: string, digitalSessionId: string, testMode: boolean | undefined, onPaymentSelect: any): Promise<InternalCheckoutSelectors> {
         const state = this._store.getState();
         const paymentMethod = state.paymentMethods.getPaymentMethod(methodId);
 
@@ -139,25 +138,27 @@ export default class ChasepayPaymentStrategy extends PaymentStrategy {
             methodId,
             onPaymentSelect,
             this._storeLanguage)
-            .then(() => this._displayChasepayLightbox(digitalSessionId, testMode));
+            .then(() => this._displayChasepayLightbox(digitalSessionId, testMode))
+            .then(() => super.initialize());
     }
 
     @bind
-    private _handleWalletButtonClick(event: Event): EventListenerObject | void {
+    private _handleWalletButtonClick(event: Event): void {
+        event.preventDefault();
         if (!this._methodId) {
             throw new MissingDataError(MissingDataErrorType.MissingOrderConfig);
         }
         const methodId = this._methodId;
-        this._store.dispatch(this._paymentMethodActionCreator.loadPaymentMethod(methodId))
-            .then(state => {
-                this._paymentMethod = state.paymentMethods.getPaymentMethod(methodId);
-                if (!this._paymentMethod || !this._paymentMethod.initializationData) {
-                    throw new MissingDataError(MissingDataErrorType.MissingPaymentMethod);
-                }
-                const { initializationData, config } = this._paymentMethod;
-                return this._displayChasepayLightbox(initializationData.digitalSessionId, config.testMode);
-            });
-        return event.preventDefault();
+        this._store.dispatch(this._paymentStrategyActionCreator.widgetInteraction(() =>
+            this._store.dispatch(this._paymentMethodActionCreator.loadPaymentMethod(methodId))
+                .then(state => {
+                    this._paymentMethod = state.paymentMethods.getPaymentMethod(methodId);
+                    if (!this._paymentMethod || !this._paymentMethod.initializationData) {
+                        throw new MissingDataError(MissingDataErrorType.MissingPaymentMethod);
+                    }
+                    const { initializationData, config } = this._paymentMethod;
+                    return this._displayChasepayLightbox(initializationData.digitalSessionId, config.testMode);
+                }), { methodId }), { queueId: 'widgetInteraction' });
     }
 
     private _mapCardData(initializationData?: any, riskToken?: string | undefined): CryptogramInstrument {
@@ -184,14 +185,6 @@ export default class ChasepayPaymentStrategy extends PaymentStrategy {
             };
         }
         return payload;
-    }
-
-    private _paymentInstrumentSelection(methodId: string): Promise<InternalCheckoutSelectors> {
-        return this._store.dispatch(this._paymentStrategyActionCreator.widgetInteraction(() =>
-            Promise.all([
-                this._store.dispatch(this._checkoutActionCreator.loadCurrentCheckout()),
-                this._store.dispatch(this._paymentMethodActionCreator.loadPaymentMethod(methodId)),
-            ]), { methodId }), { queueId: 'widgetInteraction' });
     }
 
     private _paymentInstrumentSelected(payload: ChasePaySuccessPayload, methodId: string): Promise<InternalCheckoutSelectors> {
@@ -223,12 +216,11 @@ export default class ChasepayPaymentStrategy extends PaymentStrategy {
                 const { config } = this._paymentMethod;
                 return this._chasePayScriptLoader.load(config.testMode)
                     .then(({ ChasePay }) => {
-                        const { START_CHECKOUT, COMPLETE_CHECKOUT } = ChasePay.EventType;
+                        const { START_CHECKOUT, CANCEL_CHECKOUT, COMPLETE_CHECKOUT } = ChasePay.EventType;
 
                         ChasePay.configure({ language });
                         ChasePay.on(COMPLETE_CHECKOUT, (payload: ChasePaySuccessPayload) =>
                             this._paymentInstrumentSelected(payload, methodId).then(() => onPaymentSelect()));
-                        ChasePay.on(START_CHECKOUT, () => this._paymentInstrumentSelection(methodId));
 
                         if (ChasePay.isChasePayUp && document.getElementById(this._logoContainer || '')) {
                             ChasePay.insertBrandings({ color: 'white', containers: [this._logoContainer] });
