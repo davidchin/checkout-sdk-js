@@ -25,6 +25,7 @@ export default class ChasepayPaymentStrategy extends PaymentStrategy {
     private _methodId?: string;
     private _paymentMethod?: PaymentMethod;
     private _storeLanguage?: string;
+    private _onPaymentSelect?: () => void;
 
     constructor(
         store: CheckoutStore,
@@ -62,6 +63,7 @@ export default class ChasepayPaymentStrategy extends PaymentStrategy {
 
         this._storeLanguage = storeConfig.storeProfile.storeLanguage;
         this._logoContainer = logoContainer;
+        this._onPaymentSelect = onPaymentSelect;
         this._methodId = methodId;
 
         if (options.gatewayId === 'wepay') {
@@ -219,10 +221,16 @@ export default class ChasepayPaymentStrategy extends PaymentStrategy {
                         const { START_CHECKOUT, CANCEL_CHECKOUT, COMPLETE_CHECKOUT } = ChasePay.EventType;
 
                         ChasePay.configure({ language });
+                        ChasePay.on(CANCEL_CHECKOUT, () =>
+                            this._setChasePayConfiguration(
+                                methodId,
+                                (this._onPaymentSelect) ? this._onPaymentSelect : () => {},
+                                this._storeLanguage
+                            ));
                         ChasePay.on(COMPLETE_CHECKOUT, (payload: ChasePaySuccessPayload) =>
                             this._paymentInstrumentSelected(payload, methodId).then(() => onPaymentSelect()));
 
-                        if (ChasePay.isChasePayUp && document.getElementById(this._logoContainer || '')) {
+                        if (ChasePay.isChasePayUp && this._logoContainer && document.getElementById(this._logoContainer)) {
                             ChasePay.insertBrandings({ color: 'white', containers: [this._logoContainer] });
                         }
                     });
@@ -251,7 +259,7 @@ export interface ChasePayInitializeOptions {
      * This container is used to host the chasepay branding logo.
      * It should be an HTML element.
      */
-    logoContainer?: string;
+    logoContainer: string;
 
     /**
      * This walletButton is used to set an event listener, provide an element ID if you want
