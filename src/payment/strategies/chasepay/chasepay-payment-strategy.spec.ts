@@ -15,7 +15,7 @@ import { OrderActionCreator, OrderActionType, OrderRequestBody } from '../../../
 import { getOrderRequestBody } from '../../../order/internal-orders.mock';
 import { createPaymentClient, createPaymentStrategyRegistry, PaymentActionCreator, PaymentMethod, PaymentMethodActionCreator } from '../../../payment';
 import { getChasePay, getPaymentMethodsState } from '../../../payment/payment-methods.mock';
-import { ChasePayScriptLoader, JPMC } from '../../../payment/strategies/chasepay';
+import { ChasePayEventType, ChasePayScriptLoader, JPMC } from '../../../payment/strategies/chasepay';
 import { getChasePayScriptMock } from '../../../payment/strategies/chasepay/chasepay.mock';
 import { PaymentActionType } from '../../payment-actions';
 import PaymentMethodRequestSender from '../../payment-method-request-sender';
@@ -96,14 +96,14 @@ describe('ChasePayPaymentStrategy', () => {
 
         strategy = new ChasePayPaymentStrategy(
             store,
-            paymentMethodActionCreator,
-            chasePayScriptLoader,
-            paymentActionCreator,
+            checkoutActionCreator,
             orderActionCreator,
-            requestSender,
-            wepayRiskClient,
+            paymentActionCreator,
+            paymentMethodActionCreator,
             paymentStrategyActionCreator,
-            checkoutActionCreator
+            requestSender,
+            chasePayScriptLoader,
+            wepayRiskClient
         );
 
         container = document.createElement('div');
@@ -147,7 +147,7 @@ describe('ChasePayPaymentStrategy', () => {
 
             await strategy.initialize(chasePayOptions);
 
-            expect(JPMC.ChasePay.on).toHaveBeenCalledWith('COMPLETE_CHECKOUT', expect.any(Function));
+            expect(JPMC.ChasePay.on).toHaveBeenCalledWith(ChasePayEventType.CompleteCheckout, expect.any(Function));
         });
 
         it('does not load chasepay if initialization options are not provided', async () => {
@@ -205,18 +205,6 @@ describe('ChasePayPaymentStrategy', () => {
             paymentActionCreator.submitPayment = jest.fn(() => submitPaymentAction);
             orderActionCreator.submitOrder = jest.fn(() => submitOrderAction);
             await strategy.initialize(chasePayOptions);
-        });
-
-        it('does not execute the strategy if order request body is not provided', async () => {
-            orderRequestBody.payment = undefined;
-            expect(() => strategy.execute(orderRequestBody, chasePayOptions)).toThrowError(InvalidArgumentError);
-            expect(orderActionCreator.submitOrder).not.toHaveBeenCalled();
-        });
-
-        it('does not execute the strategy if order request body is not provided', async () => {
-            paymentMethodMock.initializationData = undefined;
-            expect(() => strategy.execute(orderRequestBody, chasePayOptions)).toThrowError(MissingDataError);
-            expect(orderActionCreator.submitOrder).not.toHaveBeenCalled();
         });
 
         it('calls submit order with the order request information', async () => {

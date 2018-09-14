@@ -8,7 +8,7 @@ import { getCheckoutState } from '../../checkout/checkouts.mock';
 import { getConfigState } from '../../config/configs.mock';
 import { PaymentMethod, PaymentMethodActionCreator, PaymentMethodRequestSender } from '../../payment';
 import { getChasePay, getPaymentMethodsState } from '../../payment/payment-methods.mock';
-import { ChasePayScriptLoader, JPMC } from '../../payment/strategies/chasepay';
+import { ChasePayEventType, ChasePayScriptLoader, JPMC } from '../../payment/strategies/chasepay';
 import { getChasePayScriptMock } from '../../payment/strategies/chasepay/chasepay.mock';
 import { RemoteCheckoutActionCreator, RemoteCheckoutRequestSender } from '../../remote-checkout';
 import { CustomerInitializeOptions } from '../customer-request-options';
@@ -110,8 +110,8 @@ describe('ChasePayCustomerStrategy', () => {
 
             await strategy.initialize(chasePayOptions);
 
-            expect(JPMC.ChasePay.on).toHaveBeenCalledWith('START_CHECKOUT', expect.any(Function));
-            expect(JPMC.ChasePay.on).toHaveBeenCalledWith('COMPLETE_CHECKOUT', expect.any(Function));
+            expect(JPMC.ChasePay.on).toHaveBeenCalledWith(ChasePayEventType.StartCheckout, expect.any(Function));
+            expect(JPMC.ChasePay.on).toHaveBeenCalledWith(ChasePayEventType.CompleteCheckout, expect.any(Function));
         });
     });
 

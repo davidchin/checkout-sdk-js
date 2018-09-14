@@ -1,7 +1,13 @@
+export enum ChasePayEventType {
+    StartCheckout = 'startCheckout',
+    CompleteCheckout = 'completeCheckout',
+    CancelCheckout = 'cancelCheckout',
+}
+
 export interface ChasePayEventMap {
-    'START_CHECKOUT'(digitalSessionId: string): void;
-    'COMPLETE_CHECKOUT'(payload: ChasePaySuccessPayload): void;
-    'CANCEL_CHECKOUT'(): void;
+    [ChasePayEventType.StartCheckout](digitalSessionId: string): void;
+    [ChasePayEventType.CompleteCheckout](payload: ChasePaySuccessPayload): void;
+    [ChasePayEventType.CancelCheckout](): void;
 }
 
 export interface ChasePayHostWindow extends Window {
@@ -32,9 +38,9 @@ export interface ChasePayConfigureOptions {
 
 export interface ChasePay {
     EventType: {
-        START_CHECKOUT: 'START_CHECKOUT';
-        COMPLETE_CHECKOUT: 'COMPLETE_CHECKOUT';
-        CANCEL_CHECKOUT: 'CANCEL_CHECKOUT';
+        START_CHECKOUT: ChasePayEventType.StartCheckout;
+        COMPLETE_CHECKOUT: ChasePayEventType.CompleteCheckout;
+        CANCEL_CHECKOUT: ChasePayEventType.CancelCheckout;
     };
     isChasePayUp(): boolean;
     insertButtons(options: ChasePayInsertOptions): void;

@@ -35,7 +35,7 @@ import {
 import { AfterpayScriptLoader } from './strategies/afterpay';
 import { AmazonPayScriptLoader } from './strategies/amazon-pay';
 import { createBraintreePaymentProcessor, createBraintreeVisaCheckoutPaymentProcessor, VisaCheckoutScriptLoader } from './strategies/braintree';
-import { ChasepayPaymentStrategy, ChasePayScriptLoader } from './strategies/chasepay';
+import { ChasePayPaymentStrategy, ChasePayScriptLoader } from './strategies/chasepay';
 import { KlarnaScriptLoader } from './strategies/klarna';
 import { PaypalScriptLoader } from './strategies/paypal';
 import { SquareScriptLoader } from './strategies/square';
@@ -53,15 +53,12 @@ export default function createPaymentStrategyRegistry(
     const configActionCreator = new ConfigActionCreator(new ConfigRequestSender(requestSender));
     const checkoutRequestSender = new CheckoutRequestSender(requestSender);
     const checkoutValidator = new CheckoutValidator(checkoutRequestSender);
+    const checkoutActionCreator = new CheckoutActionCreator(checkoutRequestSender, configActionCreator);
     const orderActionCreator = new OrderActionCreator(client, checkoutValidator);
-    const paymentActionCreator = new PaymentActionCreator(
-        new PaymentRequestSender(paymentClient),
-        orderActionCreator
-    );
+    const paymentActionCreator = new PaymentActionCreator(new PaymentRequestSender(paymentClient), orderActionCreator);
     const paymentMethodActionCreator = new PaymentMethodActionCreator(new PaymentMethodRequestSender(requestSender));
-    const remoteCheckoutActionCreator = new RemoteCheckoutActionCreator(
-        new RemoteCheckoutRequestSender(requestSender)
-    );
+    const paymentStrategyActionCreator = new PaymentStrategyActionCreator(registry, orderActionCreator);
+    const remoteCheckoutActionCreator = new RemoteCheckoutActionCreator(new RemoteCheckoutRequestSender(requestSender));
 
     registry.register('afterpay', () =>
         new AfterpayPaymentStrategy(
@@ -208,12 +205,9 @@ export default function createPaymentStrategyRegistry(
     registry.register('braintreevisacheckout', () =>
         new BraintreeVisaCheckoutPaymentStrategy(
             store,
-            new CheckoutActionCreator(
-                checkoutRequestSender,
-                new ConfigActionCreator(new ConfigRequestSender(requestSender))
-            ),
+            checkoutActionCreator,
             paymentMethodActionCreator,
-            new PaymentStrategyActionCreator(registry, orderActionCreator),
+            paymentStrategyActionCreator,
             paymentActionCreator,
             orderActionCreator,
             createBraintreeVisaCheckoutPaymentProcessor(scriptLoader, requestSender),
@@ -222,16 +216,16 @@ export default function createPaymentStrategyRegistry(
     );
 
     registry.register('chasepay', () =>
-        new ChasepayPaymentStrategy(
+        new ChasePayPaymentStrategy(
             store,
-            paymentMethodActionCreator,
-            new ChasePayScriptLoader(getScriptLoader()),
-            paymentActionCreator,
+            checkoutActionCreator,
             orderActionCreator,
+            paymentActionCreator,
+            paymentMethodActionCreator,
+            paymentStrategyActionCreator,
             requestSender,
-            new WepayRiskClient(scriptLoader),
-            new PaymentStrategyActionCreator(registry, orderActionCreator),
-            new CheckoutActionCreator(checkoutRequestSender, configActionCreator)
+            new ChasePayScriptLoader(getScriptLoader()),
+            new WepayRiskClient(scriptLoader)
         )
     );
 

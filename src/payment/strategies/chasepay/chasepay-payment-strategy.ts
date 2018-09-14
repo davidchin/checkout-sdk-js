@@ -1,275 +1,248 @@
-import { RequestSender, Response } from '@bigcommerce/request-sender';
+import { RequestSender } from '@bigcommerce/request-sender';
+import { Subject } from 'rxjs';
 
-import {
-    PaymentActionCreator,
-    PaymentInitializeOptions,
-    PaymentMethod,
-    PaymentMethodActionCreator,
-    PaymentRequestOptions,
-    PaymentStrategyActionCreator,
-} from '../..';
 import { CheckoutActionCreator, CheckoutStore, InternalCheckoutSelectors } from '../../../checkout';
-import { InvalidArgumentError, MissingDataError, MissingDataErrorType } from '../../../common/error/errors';
+import { InvalidArgumentError, MissingDataError, MissingDataErrorType, NotInitializedError, NotInitializedErrorType } from '../../../common/error/errors';
 import { toFormUrlEncoded } from '../../../common/http-request';
-import { default as bind } from '../../../common/utility/bind-decorator';
-import { OrderActionCreator, OrderPaymentRequestBody, OrderRequestBody } from '../../../order';
-import { ChasePayScriptLoader, ChasePaySuccessPayload } from '../../../payment/strategies/chasepay';
-import { PaymentArgumentInvalidError } from '../../errors';
-import { CryptogramInstrument } from '../../payment';
+import { bindDecorator as bind } from '../../../common/utility';
+import { OrderActionCreator, OrderRequestBody } from '../../../order';
+import { PaymentMethodCancelledError } from '../../errors';
+import Payment from '../../payment';
+import PaymentActionCreator from '../../payment-action-creator';
+import PaymentMethodActionCreator from '../../payment-method-action-creator';
+import { PaymentInitializeOptions, PaymentRequestOptions } from '../../payment-request-options';
+import PaymentStrategyActionCreator from '../../payment-strategy-action-creator';
 import PaymentStrategy from '../payment-strategy';
-import WepayRiskClient from '../wepay/wepay-risk-client';
+import { WepayRiskClient } from '../wepay';
 
-export default class ChasepayPaymentStrategy extends PaymentStrategy {
-    private _button?: HTMLElement;
-    private _logoContainer?: string;
-    private _methodId?: string;
-    private _paymentMethod?: PaymentMethod;
-    private _storeLanguage?: string;
-    private _onPaymentSelect?: () => void;
+import { ChasePay, ChasePayEventType, ChasePaySuccessPayload } from './chasepay';
+import ChasePayInitializeOptions from './chasepay-initialize-options';
+import ChasePayScriptLoader from './chasepay-script-loader';
+
+export default class ChasePayPaymentStrategy extends PaymentStrategy {
+    private _chasePayClient?: ChasePay;
+    private _methodId!: string;
+    private _walletButton?: HTMLElement;
+    private _walletEvent$: Subject<{ type: ChasePayEventType }>;
 
     constructor(
         store: CheckoutStore,
-        private _paymentMethodActionCreator: PaymentMethodActionCreator,
-        private _chasePayScriptLoader: ChasePayScriptLoader,
-        private _paymentActionCreator: PaymentActionCreator,
+        private _checkoutActionCreator: CheckoutActionCreator,
         private _orderActionCreator: OrderActionCreator,
-        private _requestSender: RequestSender,
-        private _wepayRiskClient: WepayRiskClient,
+        private _paymentActionCreator: PaymentActionCreator,
+        private _paymentMethodActionCreator: PaymentMethodActionCreator,
         private _paymentStrategyActionCreator: PaymentStrategyActionCreator,
-        private _checkoutActionCreator: CheckoutActionCreator
-
+        private _requestSender: RequestSender,
+        private _chasePayScriptLoader: ChasePayScriptLoader,
+        private _wepayRiskClient: WepayRiskClient
     ) {
         super(store);
+
+        this._walletEvent$ = new Subject();
     }
 
     initialize(options: PaymentInitializeOptions): Promise<InternalCheckoutSelectors> {
-        const { methodId } = options;
+        this._methodId = options.methodId;
 
         if (!options.chasepay) {
             throw new InvalidArgumentError('Unable to initialize payment because "options.chasepayCheckoutOptions" argument is not provided.');
         }
 
-        const {
-            onPaymentSelect = () => {},
-            logoContainer,
-            walletButton,
-        } = options.chasepay;
+        const walletButton = options.chasepay.walletButton && document.getElementById(options.chasepay.walletButton);
 
-        const storeConfig = this._store.getState().config.getStoreConfig();
+        if (walletButton) {
+            this._walletButton = walletButton;
+            this._walletButton.addEventListener('click', this._handleWalletButtonClick);
+        }
+
+        return this._configureWallet(options.chasepay)
+            .then(() => super.initialize(options));
+    }
+
+    deinitialize(options?: PaymentRequestOptions): Promise<InternalCheckoutSelectors> {
+        if (this._walletButton) {
+            this._walletButton.removeEventListener('click', this._handleWalletButtonClick);
+        }
+
+        this._walletButton = undefined;
+        this._chasePayClient = undefined;
+
+        return super.deinitialize(options);
+    }
+
+    execute(payload: OrderRequestBody, options?: PaymentRequestOptions): Promise<InternalCheckoutSelectors> {
+        return this._getPayment()
+            .catch(error => {
+                if (error.subtype === MissingDataErrorType.MissingPayment) {
+                    return this._displayWallet()
+                        .then(() => this._getPayment());
+                }
+
+                throw error;
+            })
+            .then(payment =>
+                this._createOrder(payment, payload.useStoreCredit, options)
+            );
+    }
+
+    private _configureWallet(options: ChasePayInitializeOptions): Promise<void> {
+        const state = this._store.getState();
+        const paymentMethod = state.paymentMethods.getPaymentMethod(this._methodId);
+        const storeConfig = state.config.getStoreConfig();
+
+        if (!paymentMethod) {
+            throw new MissingDataError(MissingDataErrorType.MissingPaymentMethod);
+        }
 
         if (!storeConfig) {
             throw new MissingDataError(MissingDataErrorType.MissingCheckoutConfig);
         }
 
-        this._storeLanguage = storeConfig.storeProfile.storeLanguage;
-        this._logoContainer = logoContainer;
-        this._onPaymentSelect = onPaymentSelect;
-        this._methodId = methodId;
-
-        if (options.gatewayId === 'wepay') {
-            this._wepayRiskClient.initialize();
-        }
-
-        this._button = walletButton && document.getElementById(walletButton) || undefined;
-
-        if (this._button) {
-            this._button.addEventListener('click', this._handleWalletButtonClick);
-        }
-
-        return this._setChasePayConfiguration(
-            methodId,
-            onPaymentSelect,
-            this._storeLanguage
-        )
-        .then(() => super.initialize(options));
-    }
-
-    execute(orderRequest: OrderRequestBody, options?: PaymentRequestOptions): Promise<InternalCheckoutSelectors> {
-        const { payment, ...order } = orderRequest;
-        if (!payment || !options) {
-            throw new PaymentArgumentInvalidError(['payment']);
-        }
-
-        if (!this._paymentMethod || !this._paymentMethod.initializationData) {
-            throw new MissingDataError(MissingDataErrorType.MissingPaymentMethod);
-        }
-
-        const { initializationData, config } = this._paymentMethod;
-
-        const riskToken = (payment.gatewayId === 'wepay') ? this._wepayRiskClient.getRiskToken() : undefined;
-        const paymentData = this._mapCardData(initializationData, riskToken);
-
-        return this._getPaymentData(payment.methodId,
-            initializationData.digitalSessionId,
-            config.testMode,
-            () => this._processPayment(payment, paymentData, order, options));
-    }
-
-    deinitialize(options?: PaymentRequestOptions): Promise<InternalCheckoutSelectors> {
-        if (this._button) {
-            this._button.removeEventListener('click', this._handleWalletButtonClick);
-        }
-
-        return super.deinitialize(options);
-    }
-
-    private _completeCheckout(payload: ChasePaySuccessPayload, methodId: string): Promise<any> {
-        const state = this._store.getState();
-        const method = state.paymentMethods.getPaymentMethod(methodId);
-        const requestId = method && method.initializationData && method.initializationData.merchantRequestId;
-        return this._setExternalCheckoutData(payload, requestId);
-    }
-
-    private _displayChasepayLightbox(digitalSessionId: string, testMode?: boolean): Promise<void> {
-        return this._chasePayScriptLoader.load(testMode)
+        return this._chasePayScriptLoader.load(paymentMethod.config.testMode)
             .then(({ ChasePay }) => {
-                ChasePay.showLoadingAnimation();
-                ChasePay.startCheckout(digitalSessionId);
+                this._chasePayClient = ChasePay;
+
+                if (options.logoContainer && document.getElementById(options.logoContainer)) {
+                    this._chasePayClient.insertBrandings({
+                        color: 'white',
+                        containers: [options.logoContainer],
+                    });
+                }
+
+                this._chasePayClient.configure({
+                    language: storeConfig.storeProfile.storeLanguage,
+                });
+
+                this._chasePayClient.on(ChasePayEventType.CancelCheckout, () => {
+                    this._walletEvent$.next({ type: ChasePayEventType.CancelCheckout });
+
+                    if (options.onCancel) {
+                        options.onCancel();
+                    }
+                });
+
+                this._chasePayClient.on(ChasePayEventType.CompleteCheckout, (payload: ChasePaySuccessPayload) => {
+                    this._setSessionToken(payload.sessionToken)
+                        .then(() => {
+                            this._walletEvent$.next({ type: ChasePayEventType.CompleteCheckout });
+
+                            if (options.onPaymentSelect) {
+                                options.onPaymentSelect();
+                            }
+                        });
+                });
             });
     }
 
-    private _getPaymentData(methodId: string, digitalSessionId: string, testMode: boolean | undefined, onPaymentSelect: any): Promise<InternalCheckoutSelectors> {
-        const state = this._store.getState();
-        const paymentMethod = state.paymentMethods.getPaymentMethod(methodId);
-
-        if (paymentMethod) {
-            return Promise.resolve(onPaymentSelect);
-        }
-
-        return this._setChasePayConfiguration(
-            methodId,
-            onPaymentSelect,
-            this._storeLanguage)
-            .then(() => this._displayChasepayLightbox(digitalSessionId, testMode))
-            .then(() => super.initialize());
-    }
-
-    @bind
-    private _handleWalletButtonClick(event: Event): void {
-        event.preventDefault();
-        if (!this._methodId) {
-            throw new MissingDataError(MissingDataErrorType.MissingOrderConfig);
-        }
-        const methodId = this._methodId;
-        this._store.dispatch(this._paymentStrategyActionCreator.widgetInteraction(() =>
-            this._store.dispatch(this._paymentMethodActionCreator.loadPaymentMethod(methodId))
+    private _displayWallet(): Promise<InternalCheckoutSelectors> {
+        return this._store.dispatch(this._paymentStrategyActionCreator.widgetInteraction(() => {
+            this._store.dispatch(this._paymentMethodActionCreator.loadPaymentMethod(this._methodId))
                 .then(state => {
-                    this._paymentMethod = state.paymentMethods.getPaymentMethod(methodId);
-                    if (!this._paymentMethod || !this._paymentMethod.initializationData) {
+                    const paymentMethod = state.paymentMethods.getPaymentMethod(this._methodId);
+
+                    if (!this._chasePayClient) {
+                        throw new NotInitializedError(NotInitializedErrorType.PaymentNotInitialized);
+                    }
+
+                    if (!paymentMethod) {
                         throw new MissingDataError(MissingDataErrorType.MissingPaymentMethod);
                     }
-                    const { initializationData, config } = this._paymentMethod;
-                    return this._displayChasepayLightbox(initializationData.digitalSessionId, config.testMode);
-                }), { methodId }), { queueId: 'widgetInteraction' });
-    }
 
-    private _mapCardData(initializationData?: any, riskToken?: string | undefined): CryptogramInstrument {
-        if (!initializationData) {
-            throw new MissingDataError(MissingDataErrorType.MissingPaymentMethod);
-        }
+                    this._chasePayClient.showLoadingAnimation();
+                    this._chasePayClient.startCheckout(paymentMethod.initializationData.digitalSessionId);
+                });
 
-        let payload: CryptogramInstrument = {
-            cryptogramId: initializationData.paymentCryptogram,
-            eci: initializationData.eci,
-            transactionId: btoa(initializationData.reqTokenId),
-            ccExpiry: {
-                month: initializationData.expDate.toString().substr(0, 2),
-                year: initializationData.expDate.toString().substr(2, 2),
-            },
-            ccNumber: initializationData.accountNum,
-            accountMask: initializationData.accountMask,
-        };
-
-        if (riskToken) {
-            payload = {
-                ...payload,
-                extraData: { riskToken },
-            };
-        }
-        return payload;
-    }
-
-    private _paymentInstrumentSelected(payload: ChasePaySuccessPayload, methodId: string): Promise<InternalCheckoutSelectors> {
-        return this._store.dispatch(this._paymentStrategyActionCreator.widgetInteraction(() =>
-            this._completeCheckout(payload, methodId).then(() =>
-                Promise.all([
-                    this._store.dispatch(this._checkoutActionCreator.loadCurrentCheckout()),
-                    this._store.dispatch(this._paymentMethodActionCreator.loadPaymentMethod(methodId)),
-                ])), { methodId }), { queueId: 'widgetInteraction' });
-    }
-
-    private _processPayment(payment: OrderPaymentRequestBody, paymentData: CryptogramInstrument, order: any, options: PaymentRequestOptions): Promise<InternalCheckoutSelectors> {
-        return this._store.dispatch(this._orderActionCreator.submitOrder(order, options))
-            .then(() =>
-                this._store.dispatch(this._paymentActionCreator.submitPayment({
-                    ...payment,
-                    paymentData,
-                }))
-            );
-    }
-
-    private _setChasePayConfiguration(methodId: string, onPaymentSelect: () => void, language?: string): Promise<void> {
-        return this._store.dispatch(this._paymentMethodActionCreator.loadPaymentMethod(methodId))
-            .then(state => {
-                this._paymentMethod = state.paymentMethods.getPaymentMethod(methodId);
-                if (!this._paymentMethod || !this._paymentMethod.initializationData) {
-                    throw new MissingDataError(MissingDataErrorType.MissingPaymentMethod);
-                }
-                const { config } = this._paymentMethod;
-                return this._chasePayScriptLoader.load(config.testMode)
-                    .then(({ ChasePay }) => {
-                        const { START_CHECKOUT, CANCEL_CHECKOUT, COMPLETE_CHECKOUT } = ChasePay.EventType;
-
-                        ChasePay.configure({ language });
-                        ChasePay.on(CANCEL_CHECKOUT, () =>
-                            this._setChasePayConfiguration(
-                                methodId,
-                                (this._onPaymentSelect) ? this._onPaymentSelect : () => {},
-                                this._storeLanguage
-                            ));
-                        ChasePay.on(COMPLETE_CHECKOUT, (payload: ChasePaySuccessPayload) =>
-                            this._paymentInstrumentSelected(payload, methodId).then(() => onPaymentSelect()));
-
-                        if (ChasePay.isChasePayUp && this._logoContainer && document.getElementById(this._logoContainer)) {
-                            ChasePay.insertBrandings({ color: 'white', containers: [this._logoContainer] });
+            // Wait for payment selection
+            return new Promise((resolve, reject) => {
+                this._walletEvent$.take(1)
+                    .subscribe((event: { type: ChasePayEventType }) => {
+                        if (event.type === ChasePayEventType.CancelCheckout) {
+                            reject(new PaymentMethodCancelledError());
+                        } else if (event.type === ChasePayEventType.CompleteCheckout) {
+                            resolve();
                         }
                     });
             });
+        }, { methodId: this._methodId }), { queueId: 'widgetInteraction' });
     }
 
-    private _setExternalCheckoutData(payload: ChasePaySuccessPayload, requestId: string): Promise<Response> {
-        const url = `checkout.php?provider=chasepay&action=set_external_checkout`;
-        const options = {
+    private _setSessionToken(sessionToken: string): Promise<InternalCheckoutSelectors> {
+        const state = this._store.getState();
+        const paymentMethod = state.paymentMethods.getPaymentMethod(this._methodId);
+        const merchantRequestId = paymentMethod && paymentMethod.initializationData.merchantRequestId;
+
+        return this._requestSender.post('checkout.php', {
             headers: {
                 Accept: 'text/html',
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             },
             body: toFormUrlEncoded({
-                sessionToken: payload.sessionToken,
-                merchantRequestId: requestId,
+                action: 'set_external_checkout',
+                provider: this._methodId,
+                sessionToken,
+                merchantRequestId,
             }),
-        };
-
-        return this._requestSender.post(url, options);
+        })
+            // Re-hydrate checkout data
+            .then(() => Promise.all([
+                this._store.dispatch(this._checkoutActionCreator.loadCurrentCheckout()),
+                this._store.dispatch(this._paymentMethodActionCreator.loadPaymentMethod(this._methodId)),
+            ]))
+            .then(() => this._store.getState());
     }
-}
 
-export interface ChasePayInitializeOptions {
-    /**
-     * This container is used to host the chasepay branding logo.
-     * It should be an HTML element.
-     */
-    logoContainer: string;
+    private _getPayment(): Promise<Payment> {
+        return this._store.dispatch(this._paymentMethodActionCreator.loadPaymentMethod(this._methodId))
+            .then(() => {
+                if (this._methodId === 'wepay') {
+                    return this._wepayRiskClient.initialize()
+                        .then(client => client.getRiskToken());
+                }
 
-    /**
-     * This walletButton is used to set an event listener, provide an element ID if you want
-     * users to be able to launch the ChasePay wallet modal by clicking on a button.
-     * It should be an HTML element.
-     */
-    walletButton?: string;
+                return '';
+            })
+            .then(riskToken => {
+                const state = this._store.getState();
+                const paymentMethod = state.paymentMethods.getPaymentMethod(this._methodId);
 
-    /**
-     * A callback that gets called when the customer selects a payment option.
-     */
-    onPaymentSelect?(): void;
+                if (!paymentMethod) {
+                    throw new MissingDataError(MissingDataErrorType.MissingPaymentMethod);
+                }
+
+                if (!paymentMethod.initializationData.paymentCryptogram) {
+                    throw new MissingDataError(MissingDataErrorType.MissingPayment);
+                }
+
+                const paymentData = {
+                    method: this._methodId,
+                    cryptogramId: paymentMethod.initializationData.paymentCryptogram,
+                    eci: paymentMethod.initializationData.eci,
+                    transactionId: btoa(paymentMethod.initializationData.reqTokenId),
+                    ccExpiry: {
+                        month: paymentMethod.initializationData.expDate.toString().substr(0, 2),
+                        year: paymentMethod.initializationData.expDate.toString().substr(2, 2),
+                    },
+                    ccNumber: paymentMethod.initializationData.accountNum,
+                    accountMask: paymentMethod.initializationData.accountMask,
+                    extraData: riskToken ? { riskToken } : undefined,
+                };
+
+                return {
+                    methodId: this._methodId,
+                    paymentData,
+                };
+            });
+    }
+
+    private _createOrder(payment: Payment, useStoreCredit?: boolean, options?: PaymentRequestOptions): Promise<InternalCheckoutSelectors> {
+        return this._store.dispatch(this._orderActionCreator.submitOrder({ useStoreCredit }, options))
+            .then(() => this._store.dispatch(this._paymentActionCreator.submitPayment(payment)));
+    }
+
+    @bind
+    private _handleWalletButtonClick(event: Event): void {
+        event.preventDefault();
+
+        this._displayWallet();
+    }
 }

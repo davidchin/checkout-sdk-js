@@ -1,4 +1,4 @@
-import { JPMC } from './chasepay';
+import { ChasePayEventType, JPMC } from './chasepay';
 
 export function getChasePayScriptMock(): JPMC {
     return {
@@ -11,9 +11,9 @@ export function getChasePayScriptMock(): JPMC {
             showLoadingAnimation: jest.fn(),
             on: jest.fn(),
             EventType: {
-                START_CHECKOUT: 'START_CHECKOUT',
-                COMPLETE_CHECKOUT: 'COMPLETE_CHECKOUT',
-                CANCEL_CHECKOUT: 'CANCEL_CHECKOUT',
+                START_CHECKOUT: ChasePayEventType.StartCheckout,
+                COMPLETE_CHECKOUT: ChasePayEventType.CompleteCheckout,
+                CANCEL_CHECKOUT: ChasePayEventType.CancelCheckout,
             },
         },
     };
