@@ -1,6 +1,6 @@
 import { iframeResizer, IFrameObject } from 'iframe-resizer';
 
-import { InvalidArgumentError } from '../common/error/errors';
+import { InvalidArgumentError, TimeoutError } from '../common/error/errors';
 
 import EmbeddedCheckoutOptions from './embedded-checkout-options';
 
@@ -21,16 +21,13 @@ export default class EmbeddedCheckout {
             return;
         }
 
-        const container = document.getElementById(this._options.container);
-
-        if (!container) {
-            throw new InvalidArgumentError('Unable to attach the iframe because the container element does not exist.');
-        }
-
-        container.appendChild(this._iframe);
-
-        this._iframeResizer = this._createIframeResizer();
+        this._getContainer().appendChild(this._iframe);
         this._isAttached = true;
+
+        this._createIframeResizer()
+            .then(resizer => {
+                this._iframeResizer = resizer;
+            });
     }
 
     detach(): void {
@@ -44,9 +41,18 @@ export default class EmbeddedCheckout {
 
         if (this._iframeResizer) {
             this._iframeResizer.close();
+            this._iframeResizer = undefined;
+        }
+    }
+
+    private _getContainer(): HTMLElement {
+        const container = document.getElementById(this._options.container);
+
+        if (!container) {
+            throw new InvalidArgumentError('Unable to attach the iframe because the container element does not exist.');
         }
 
-        this._isAttached = false;
+        return container;
     }
 
     private _createIframe(): HTMLIFrameElement {
@@ -54,16 +60,47 @@ export default class EmbeddedCheckout {
 
         iframe.src = this._options.url;
         iframe.style.width = '100%';
+        iframe.style.border = 'none';
 
         return iframe;
     }
 
-    private _createIframeResizer(): IFrameObject {
-        const iframes = iframeResizer({
-            scrolling: false,
-            sizeWidth: false,
-        }, this._iframe);
+    private _createIframeResizer(): Promise<IFrameObject> {
+        return new Promise((resolve, reject) => {
+            this._iframe.addEventListener('load', () => {
+                const iframes = iframeResizer({
+                    scrolling: false,
+                    sizeWidth: false,
+                    heightCalculationMethod: 'lowestElement',
+                }, this._iframe);
 
-        return iframes[iframes.length - 1].iFrameResizer;
+                const resizer = iframes[iframes.length - 1].iFrameResizer;
+
+                if (!this._iframe.contentWindow) {
+                    return;
+                }
+
+                this._iframe.contentWindow.postMessage({ type: 'IS_LOADED' }, 'https://store-sju3wtx2.store.bcdev');
+
+                const timeout = window.setTimeout(() => {
+                    reject(new TimeoutError());
+                }, 10000);
+
+                const listener = (event: MessageEvent) => {
+                    if (event.origin !== 'https://store-sju3wtx2.store.bcdev') {
+                        return;
+                    }
+
+                    if (event.data.type === 'LOADED') {
+                        resolve(resizer);
+
+                        window.removeEventListener('message', listener);
+                        window.clearTimeout(timeout);
+                    }
+                };
+
+                window.addEventListener('message', listener);
+            });
+        });
     }
 }
