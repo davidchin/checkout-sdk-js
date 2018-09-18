@@ -6,7 +6,7 @@ import { EmbeddedCheckoutEventType } from './embedded-checkout-events';
 
 const LOAD_TIMEOUT_INTERVAL = 10000;
 
-export default function createResizableIframe(src: string): Promise<IFrameComponent> {
+export default function createCheckoutIframe(src: string): Promise<IFrameComponent> {
     const iframe = document.createElement('iframe');
 
     iframe.src = src;
@@ -26,7 +26,7 @@ function toResizableIframe(iframe: HTMLIFrameElement): Promise<IFrameComponent> 
 
         const handleMessage = (event: MessageEvent) => {
             if (event.origin !== getOrigin(iframe.src) ||
-                event.data.type !== EmbeddedCheckoutEventType.DOMContentLoaded) {
+                event.data.type !== EmbeddedCheckoutEventType.FrameLoaded) {
                 return;
             }
 
