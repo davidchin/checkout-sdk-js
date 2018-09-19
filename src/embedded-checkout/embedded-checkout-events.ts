@@ -23,16 +23,20 @@ export interface EmbeddedCheckoutEvent {
 
 export interface EmbeddedCheckoutChangedEvent extends EmbeddedCheckoutEvent {
     type: EmbeddedCheckoutEventType.CheckoutChanged;
-    payload: Checkout;
+    payload: {
+        checkout: Checkout;
+    };
 }
 
 export interface EmbeddedCheckoutCompleteEvent extends EmbeddedCheckoutEvent {
     type: EmbeddedCheckoutEventType.CheckoutComplete;
-    payload: Checkout;
+    payload: {
+        checkout: Checkout;
+    };
 }
 
 export interface EmbeddedCheckoutErrorEvent extends EmbeddedCheckoutEvent {
-    type: EmbeddedCheckoutEventType.CheckoutLoaded;
+    type: EmbeddedCheckoutEventType.CheckoutError;
     payload: Error;
 }
 
@@ -42,5 +46,7 @@ export interface EmbeddedCheckoutLoadedEvent extends EmbeddedCheckoutEvent {
 
 export interface EmbeddedCheckoutReadyEvent extends EmbeddedCheckoutEvent {
     type: EmbeddedCheckoutEventType.CheckoutReady;
-    payload: Checkout;
+    payload: {
+        checkout: Checkout;
+    };
 }

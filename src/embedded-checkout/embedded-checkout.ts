@@ -1,9 +1,10 @@
 import { IFrameComponent } from 'iframe-resizer';
 
-import createCheckoutIframe from './create-checkout-iframe';
 import { EmbeddedCheckoutEvent, EmbeddedCheckoutEventType } from './embedded-checkout-events';
 import EmbeddedCheckoutListener from './embedded-checkout-listener';
 import EmbeddedCheckoutOptions from './embedded-checkout-options';
+import insertCheckoutIframe from './insert-checkout-iframe';
+import parseOrigin from './parse-origin';
 
 export default class EmbeddedCheckout {
     private _iframe?: IFrameComponent;
@@ -14,7 +15,7 @@ export default class EmbeddedCheckout {
         private _options: EmbeddedCheckoutOptions
     ) {
         this._isAttached = false;
-        this._messageListener = new EmbeddedCheckoutListener('');
+        this._messageListener = new EmbeddedCheckoutListener(parseOrigin(this._options.url));
     }
 
     attach(): Promise<this> {
@@ -23,13 +24,10 @@ export default class EmbeddedCheckout {
         }
 
         this._isAttached = true;
-
         this._messageListener.listen();
 
-        return createCheckoutIframe(this._options.url)
+        return insertCheckoutIframe(this._options.url, this._options.container)
             .then(iframe => {
-                document.appendChild(iframe);
-
                 this._iframe = iframe;
 
                 return this;
@@ -42,7 +40,6 @@ export default class EmbeddedCheckout {
         }
 
         this._isAttached = false;
-
         this._messageListener.stopListen();
 
         if (this._iframe && this._iframe.parentNode) {

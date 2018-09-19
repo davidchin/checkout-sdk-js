@@ -3,12 +3,10 @@ import { bindDecorator as bind } from '../common/utility';
 import { EmbeddedCheckoutEventMap } from './embedded-checkout-events';
 import isEmbeddedCheckoutEvent from './is-embedded-checkout-event';
 
-type valueof<T> = T[keyof T];
-
 export default class EmbeddedCheckoutListener {
     private _isListening: boolean;
     private _listeners: {
-        [key: string]: Array<(event: valueof<EmbeddedCheckoutEventMap>) => void>;
+        [key: string]: Array<(event: EmbeddedCheckoutEventMap[keyof EmbeddedCheckoutEventMap]) => void>;
     };
 
     constructor(
@@ -63,10 +61,7 @@ export default class EmbeddedCheckoutListener {
         }
 
         listeners.forEach(listener => {
-            listener({
-                type: event.data.type,
-                payload: event.data.payload,
-            });
+            listener({ type: event.data.type, payload: event.data.payload });
         });
     }
 }

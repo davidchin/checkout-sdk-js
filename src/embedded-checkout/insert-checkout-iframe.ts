@@ -1,17 +1,20 @@
 import { iframeResizer, IFrameComponent } from 'iframe-resizer';
 
-import { TimeoutError } from '../common/error/errors';
+import { InvalidArgumentError, TimeoutError } from '../common/error/errors';
 
 import { EmbeddedCheckoutEventType } from './embedded-checkout-events';
+import parseOrigin from './parse-origin';
 
-const LOAD_TIMEOUT_INTERVAL = 10000;
+const LOAD_TIMEOUT_INTERVAL = 5000;
 
-export default function createCheckoutIframe(src: string): Promise<IFrameComponent> {
+export default function insertCheckoutIframe(src: string, containerId: string): Promise<IFrameComponent> {
     const iframe = document.createElement('iframe');
 
     iframe.src = src;
     iframe.style.width = '100%';
     iframe.style.border = 'none';
+
+    getContainer(containerId).appendChild(iframe);
 
     return toResizableIframe(iframe);
 }
@@ -25,7 +28,7 @@ function toResizableIframe(iframe: HTMLIFrameElement): Promise<IFrameComponent> 
         }, LOAD_TIMEOUT_INTERVAL);
 
         const handleMessage = (event: MessageEvent) => {
-            if (event.origin !== getOrigin(iframe.src) ||
+            if (event.origin !== parseOrigin(iframe.src) ||
                 event.data.type !== EmbeddedCheckoutEventType.CheckoutLoaded) {
                 return;
             }
@@ -46,11 +49,12 @@ function toResizableIframe(iframe: HTMLIFrameElement): Promise<IFrameComponent> 
     });
 }
 
-function getOrigin(url: string): string {
-    // new URL() is not supported in IE11, use anchor tag instead
-    const anchor = document.createElement('a');
+function getContainer(containerId: string): HTMLElement {
+    const container = document.getElementById(containerId);
 
-    anchor.href = url;
+    if (!container) {
+        throw new InvalidArgumentError('Unable to insert iframe because container cannot be found.');
+    }
 
-    return `${anchor.protocol}//${anchor.hostname}`;
+    return container;
 }
