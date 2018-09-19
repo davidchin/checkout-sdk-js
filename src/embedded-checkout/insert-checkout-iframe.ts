@@ -11,8 +11,9 @@ export default function insertCheckoutIframe(src: string, containerId: string): 
     const iframe = document.createElement('iframe');
 
     iframe.src = src;
-    iframe.style.width = '100%';
     iframe.style.border = 'none';
+    iframe.style.display = 'none';
+    iframe.style.width = '100%';
 
     getContainer(containerId).appendChild(iframe);
 
@@ -32,6 +33,8 @@ function toResizableIframe(iframe: HTMLIFrameElement): Promise<IFrameComponent> 
                 event.data.type !== EmbeddedCheckoutEventType.CheckoutLoaded) {
                 return;
             }
+
+            iframe.style.display = '';
 
             const iframes = iframeResizer({
                 scrolling: false,

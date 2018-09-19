@@ -1,5 +1,14 @@
 import { Checkout } from '../../checkout';
-import { EmbeddedCheckoutChangedEvent, EmbeddedCheckoutCompleteEvent, EmbeddedCheckoutErrorEvent, EmbeddedCheckoutEventType, EmbeddedCheckoutLoadedEvent } from '../embedded-checkout-events';
+import { StandardError } from '../../common/error/errors';
+import {
+    EmbeddedCheckoutChangedEvent,
+    EmbeddedCheckoutCompleteEvent,
+    EmbeddedCheckoutErrorEvent,
+    EmbeddedCheckoutEvent,
+    EmbeddedCheckoutEventType,
+    EmbeddedCheckoutLoadedEvent,
+    EmbeddedCheckoutReadyEvent,
+} from '../embedded-checkout-events';
 
 import EmbeddedCheckoutMessengerOptions from './embedded-checkout-messenger-options';
 
@@ -14,7 +23,7 @@ export default class EmbeddedCheckoutMessenger {
             payload,
         };
 
-        window.postMessage(message, this._options.parentOrigin);
+        this._postMessage(message);
     }
 
     postComplete(payload: { checkout: Checkout }): void {
@@ -23,16 +32,19 @@ export default class EmbeddedCheckoutMessenger {
             payload,
         };
 
-        window.postMessage(message, this._options.parentOrigin);
+        this._postMessage(message);
     }
 
-    postError(payload: Error): void {
+    postError(payload: Error | StandardError): void {
         const message: EmbeddedCheckoutErrorEvent = {
             type: EmbeddedCheckoutEventType.CheckoutError,
-            payload,
+            payload: {
+                message: payload.message,
+                type: payload instanceof StandardError ? payload.type : undefined,
+            },
         };
 
-        window.postMessage(message, this._options.parentOrigin);
+        this._postMessage(message);
     }
 
     postLoaded(): void {
@@ -40,15 +52,23 @@ export default class EmbeddedCheckoutMessenger {
             type: EmbeddedCheckoutEventType.CheckoutLoaded,
         };
 
-        window.postMessage(message, this._options.parentOrigin);
+        this._postMessage(message);
     }
 
     postReady(payload: { checkout: Checkout }): void {
-        const message: EmbeddedCheckoutCompleteEvent = {
-            type: EmbeddedCheckoutEventType.CheckoutComplete,
+        const message: EmbeddedCheckoutReadyEvent = {
+            type: EmbeddedCheckoutEventType.CheckoutReady,
             payload,
         };
 
-        window.postMessage(message, this._options.parentOrigin);
+        this._postMessage(message);
+    }
+
+    private _postMessage(message: EmbeddedCheckoutEvent): void {
+        if (window === window.parent) {
+            return;
+        }
+
+        window.parent.postMessage(message, this._options.parentOrigin);
     }
 }

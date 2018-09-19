@@ -1,4 +1,5 @@
 import { Action, ThunkAction } from '@bigcommerce/data-store';
+import { SubscribeOptions } from '@bigcommerce/data-store/lib/readable-data-store';
 import { Observable } from 'rxjs/Observable';
 
 import { AddressRequestBody } from '../address';
@@ -123,13 +124,20 @@ export default class CheckoutService {
      * be triggered if all conditions are met.
      * @returns A function, if called, will unsubscribe the subscriber.
      */
-    subscribe(
-        subscriber: (state: CheckoutSelectors) => void,
-        ...filters: Array<(state: CheckoutSelectors) => any>
-    ): () => void {
+    subscribe(subscriber: (state: CheckoutSelectors) => void, ...filters: Array<(state: CheckoutSelectors) => any>): () => void;
+    subscribe(subscriber: (state: CheckoutSelectors) => void, options: SubscribeOptions<CheckoutSelectors>): () => void;
+    subscribe(subscriber: (state: CheckoutSelectors) => void, ...args: any[]): () => void {
+        const options: SubscribeOptions<CheckoutSelectors> = typeof args[0] === 'object' ? args[0] : undefined;
+        const filters: Array<(state: CheckoutSelectors) => any> = options ? (options.filters || []) : args;
+
         return this._store.subscribe(
             () => subscriber(this.getState()),
-            ...filters.map(filter => (state: InternalCheckoutSelectors) => filter(createCheckoutSelectors(state)))
+            {
+                ...options,
+                filters: filters.map((filter: any) =>
+                    (state: InternalCheckoutSelectors) => filter(createCheckoutSelectors(state))
+                ),
+            }
         );
     }
 

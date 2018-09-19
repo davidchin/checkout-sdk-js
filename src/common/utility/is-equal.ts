@@ -7,6 +7,10 @@ export default function isEqual(objectA: any, objectB: any, options?: CompareOpt
         return true;
     }
 
+    if (objectA === null && objectB === '' || objectA === '' && objectB === null) {
+        return true;
+    }
+
     if (objectA && objectB && typeof objectA === 'object' && typeof objectB === 'object') {
         if (Array.isArray(objectA) && Array.isArray(objectB)) {
             return isArrayEqual(objectA, objectB, options);

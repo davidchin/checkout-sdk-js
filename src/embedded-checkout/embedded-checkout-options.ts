@@ -1,10 +1,10 @@
-import { EmbeddedCheckoutEvent } from './embedded-checkout-events';
+import { EmbeddedCheckoutChangedEvent, EmbeddedCheckoutCompleteEvent, EmbeddedCheckoutErrorEvent, EmbeddedCheckoutReadyEvent } from './embedded-checkout-events';
 
 export default interface EmbeddedCheckoutOptions {
     container: string;
     url: string;
-    onChange?(event: EmbeddedCheckoutEvent): void;
-    onComplete?(event: EmbeddedCheckoutEvent): void;
-    onError?(event: EmbeddedCheckoutEvent): void;
-    onReady?(event: EmbeddedCheckoutEvent): void;
+    onChange?(event: EmbeddedCheckoutChangedEvent): void;
+    onComplete?(event: EmbeddedCheckoutCompleteEvent): void;
+    onError?(event: EmbeddedCheckoutErrorEvent): void;
+    onReady?(event: EmbeddedCheckoutReadyEvent): void;
 }

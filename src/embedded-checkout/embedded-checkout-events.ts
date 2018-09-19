@@ -37,7 +37,10 @@ export interface EmbeddedCheckoutCompleteEvent extends EmbeddedCheckoutEvent {
 
 export interface EmbeddedCheckoutErrorEvent extends EmbeddedCheckoutEvent {
     type: EmbeddedCheckoutEventType.CheckoutError;
-    payload: Error;
+    payload: {
+        message: string;
+        type?: string;
+    };
 }
 
 export interface EmbeddedCheckoutLoadedEvent extends EmbeddedCheckoutEvent {

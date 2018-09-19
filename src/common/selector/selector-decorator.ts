@@ -51,7 +51,8 @@ function selectorMethodDecorator<T extends Method>(target: object, key: string, 
 
                 const newValue = method.call(this, ...args);
 
-                if (isEqual(newValue, cachedValue, { keyFilter: key => !isPrivate(key) })) {
+                // Don't compare private properties and ignored properties
+                if (isEqual(newValue, cachedValue, { keyFilter: key => !isPrivate(key) && key !== 'updatedTime' })) {
                     return cachedValue;
                 }
 

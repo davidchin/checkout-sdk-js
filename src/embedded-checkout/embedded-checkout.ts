@@ -1,6 +1,6 @@
 import { IFrameComponent } from 'iframe-resizer';
 
-import { EmbeddedCheckoutEvent, EmbeddedCheckoutEventType } from './embedded-checkout-events';
+import { EmbeddedCheckoutEventMap } from './embedded-checkout-events';
 import EmbeddedCheckoutListener from './embedded-checkout-listener';
 import EmbeddedCheckoutOptions from './embedded-checkout-options';
 import insertCheckoutIframe from './insert-checkout-iframe';
@@ -48,11 +48,11 @@ export default class EmbeddedCheckout {
         }
     }
 
-    on(type: EmbeddedCheckoutEventType, listener: (event: EmbeddedCheckoutEvent) => void): void {
+    on<TType extends keyof EmbeddedCheckoutEventMap>(type: TType, listener: (event: EmbeddedCheckoutEventMap[TType]) => void): void {
         this._messageListener.addListener(type, listener);
     }
 
-    off(type: EmbeddedCheckoutEventType, listener: (event: EmbeddedCheckoutEvent) => void): void {
+    off<TType extends keyof EmbeddedCheckoutEventMap>(type: TType, listener: (event: EmbeddedCheckoutEventMap[TType]) => void): void {
         this._messageListener.removeListener(type, listener);
     }
 }

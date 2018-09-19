@@ -32,7 +32,7 @@ export default class EmbeddedCheckoutListener {
         window.removeEventListener('message', this._handleMessage);
     }
 
-    addListener<K extends keyof EmbeddedCheckoutEventMap>(type: K, listener: (event: EmbeddedCheckoutEventMap[K]) => void): void {
+    addListener<TType extends keyof EmbeddedCheckoutEventMap>(type: TType, listener: (event: EmbeddedCheckoutEventMap[TType]) => void): void {
         if (!this._listeners[type]) {
             this._listeners[type] = [];
         }
@@ -40,7 +40,7 @@ export default class EmbeddedCheckoutListener {
         this._listeners[type].push(listener);
     }
 
-    removeListener<K extends keyof EmbeddedCheckoutEventMap>(type: K, listener: (event: EmbeddedCheckoutEventMap[K]) => void): void {
+    removeListener<TType extends keyof EmbeddedCheckoutEventMap>(type: TType, listener: (event: EmbeddedCheckoutEventMap[TType]) => void): void {
         const index = this._listeners[type] && this._listeners[type].indexOf(listener);
 
         if (index >= 0) {
