@@ -1,11 +1,15 @@
 import { bindDecorator as bind } from '../common/utility';
 
-import { EmbeddedCheckoutEvent, EmbeddedCheckoutEventType } from './embedded-checkout-events';
+import { EmbeddedCheckoutEventMap } from './embedded-checkout-events';
 import isEmbeddedCheckoutEvent from './is-embedded-checkout-event';
+
+type valueof<T> = T[keyof T];
 
 export default class EmbeddedCheckoutListener {
     private _isListening: boolean;
-    private _listeners: { [key: string]: Array<(event: EmbeddedCheckoutEvent) => void> };
+    private _listeners: {
+        [key: string]: Array<(event: valueof<EmbeddedCheckoutEventMap>) => void>;
+    };
 
     constructor(
         private _origin: string
@@ -30,7 +34,7 @@ export default class EmbeddedCheckoutListener {
         window.removeEventListener('message', this._handleMessage);
     }
 
-    addListener(type: EmbeddedCheckoutEventType, listener: (event: EmbeddedCheckoutEvent) => void): void {
+    addListener<K extends keyof EmbeddedCheckoutEventMap>(type: K, listener: (event: EmbeddedCheckoutEventMap[K]) => void): void {
         if (!this._listeners[type]) {
             this._listeners[type] = [];
         }
@@ -38,7 +42,7 @@ export default class EmbeddedCheckoutListener {
         this._listeners[type].push(listener);
     }
 
-    removeListener(type: EmbeddedCheckoutEventType, listener: (event: EmbeddedCheckoutEvent) => void): void {
+    removeListener<K extends keyof EmbeddedCheckoutEventMap>(type: K, listener: (event: EmbeddedCheckoutEventMap[K]) => void): void {
         const index = this._listeners[type] && this._listeners[type].indexOf(listener);
 
         if (index >= 0) {

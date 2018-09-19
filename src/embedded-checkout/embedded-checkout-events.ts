@@ -8,6 +8,14 @@ export enum EmbeddedCheckoutEventType {
     CheckoutReady = 'CHECKOUT_READY',
 }
 
+export interface EmbeddedCheckoutEventMap {
+    [EmbeddedCheckoutEventType.CheckoutChanged]: EmbeddedCheckoutChangedEvent;
+    [EmbeddedCheckoutEventType.CheckoutComplete]: EmbeddedCheckoutCompleteEvent;
+    [EmbeddedCheckoutEventType.CheckoutError]: EmbeddedCheckoutErrorEvent;
+    [EmbeddedCheckoutEventType.CheckoutLoaded]: EmbeddedCheckoutLoadedEvent;
+    [EmbeddedCheckoutEventType.CheckoutReady]: EmbeddedCheckoutReadyEvent;
+}
+
 export interface EmbeddedCheckoutEvent {
     type: EmbeddedCheckoutEventType;
     payload?: any;
