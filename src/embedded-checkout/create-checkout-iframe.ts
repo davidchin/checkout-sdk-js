@@ -26,7 +26,7 @@ function toResizableIframe(iframe: HTMLIFrameElement): Promise<IFrameComponent> 
 
         const handleMessage = (event: MessageEvent) => {
             if (event.origin !== getOrigin(iframe.src) ||
-                event.data.type !== EmbeddedCheckoutEventType.FrameLoaded) {
+                event.data.type !== EmbeddedCheckoutEventType.CheckoutLoaded) {
                 return;
             }
 

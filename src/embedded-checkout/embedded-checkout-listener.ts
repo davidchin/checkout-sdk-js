@@ -1,6 +1,7 @@
 import { bindDecorator as bind } from '../common/utility';
 
-import { isEmbeddedCheckoutMessageEvent, EmbeddedCheckoutEvent, EmbeddedCheckoutEventType } from './embedded-checkout-events';
+import { EmbeddedCheckoutEvent, EmbeddedCheckoutEventType } from './embedded-checkout-events';
+import isEmbeddedCheckoutEvent from './is-embedded-checkout-event';
 
 export default class EmbeddedCheckoutListener {
     private _isListening: boolean;
@@ -47,7 +48,7 @@ export default class EmbeddedCheckoutListener {
 
     @bind
     private _handleMessage(event: MessageEvent): void {
-        if (event.origin !== this._origin || !isEmbeddedCheckoutMessageEvent(event)) {
+        if (event.origin !== this._origin || !isEmbeddedCheckoutEvent(event.data)) {
             return;
         }
 
@@ -60,6 +61,7 @@ export default class EmbeddedCheckoutListener {
         listeners.forEach(listener => {
             listener({
                 type: event.data.type,
+                payload: event.data.payload,
             });
         });
     }

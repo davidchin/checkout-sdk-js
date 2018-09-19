@@ -17,20 +17,22 @@ export default class EmbeddedCheckout {
         this._messageListener = new EmbeddedCheckoutListener('');
     }
 
-    attach(): void {
+    attach(): Promise<this> {
         if (this._isAttached) {
-            return;
+            return Promise.resolve(this);
         }
 
         this._isAttached = true;
 
         this._messageListener.listen();
 
-        createCheckoutIframe(this._options.url)
+        return createCheckoutIframe(this._options.url)
             .then(iframe => {
                 document.appendChild(iframe);
 
                 this._iframe = iframe;
+
+                return this;
             });
     }
 
