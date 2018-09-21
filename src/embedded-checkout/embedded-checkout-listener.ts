@@ -1,6 +1,6 @@
 import { bindDecorator as bind } from '../common/utility';
 
-import { EmbeddedCheckoutEventMap } from './embedded-checkout-events';
+import { EmbeddedCheckoutEvent, EmbeddedCheckoutEventMap } from './embedded-checkout-events';
 import isEmbeddedCheckoutEvent from './is-embedded-checkout-event';
 
 export default class EmbeddedCheckoutListener {
@@ -48,20 +48,24 @@ export default class EmbeddedCheckoutListener {
         }
     }
 
-    @bind
-    private _handleMessage(event: MessageEvent): void {
-        if (event.origin !== this._origin || !isEmbeddedCheckoutEvent(event.data)) {
-            return;
-        }
-
-        const listeners = this._listeners[event.data.type];
+    trigger(event: EmbeddedCheckoutEvent): void {
+        const listeners = this._listeners[event.type];
 
         if (!listeners) {
             return;
         }
 
         listeners.forEach(listener => {
-            listener({ type: event.data.type, payload: event.data.payload });
+            listener(event);
         });
+    }
+
+    @bind
+    private _handleMessage(event: MessageEvent): void {
+        if (event.origin !== this._origin || !isEmbeddedCheckoutEvent(event.data)) {
+            return;
+        }
+
+        this.trigger(event.data);
     }
 }

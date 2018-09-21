@@ -69,7 +69,6 @@ export default class CheckoutStoreErrorSelector {
     getError(): Error | undefined {
         return this.getLoadCheckoutError() ||
             this.getSubmitOrderError() ||
-            this.getFinalizeOrderError() ||
             this.getLoadOrderError() ||
             this.getLoadCartError() ||
             this.getLoadBillingCountriesError() ||

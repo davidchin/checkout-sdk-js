@@ -1,7 +1,5 @@
-import { Checkout } from '../../checkout';
-import { StandardError } from '../../common/error/errors';
+import { isCustomError, CustomError, StandardError } from '../../common/error/errors';
 import {
-    EmbeddedCheckoutChangedEvent,
     EmbeddedCheckoutCompleteEvent,
     EmbeddedCheckoutErrorEvent,
     EmbeddedCheckoutEvent,
@@ -17,30 +15,21 @@ export default class EmbeddedCheckoutMessenger {
         private _options: EmbeddedCheckoutMessengerOptions
     ) {}
 
-    postChanged(payload: { checkout: Checkout }): void {
-        const message: EmbeddedCheckoutChangedEvent = {
-            type: EmbeddedCheckoutEventType.CheckoutChanged,
-            payload,
-        };
-
-        this._postMessage(message);
-    }
-
-    postComplete(payload: { checkout: Checkout }): void {
+    postComplete(): void {
         const message: EmbeddedCheckoutCompleteEvent = {
             type: EmbeddedCheckoutEventType.CheckoutComplete,
-            payload,
         };
 
         this._postMessage(message);
     }
 
-    postError(payload: Error | StandardError): void {
+    postError(payload: Error | CustomError): void {
         const message: EmbeddedCheckoutErrorEvent = {
             type: EmbeddedCheckoutEventType.CheckoutError,
             payload: {
                 message: payload.message,
-                type: payload instanceof StandardError ? payload.type : undefined,
+                type: isCustomError(payload) ? payload.type : undefined,
+                subtype: isCustomError(payload) ? payload.subtype : undefined,
             },
         };
 
@@ -55,10 +44,9 @@ export default class EmbeddedCheckoutMessenger {
         this._postMessage(message);
     }
 
-    postReady(payload: { checkout: Checkout }): void {
+    postReady(): void {
         const message: EmbeddedCheckoutReadyEvent = {
             type: EmbeddedCheckoutEventType.CheckoutReady,
-            payload,
         };
 
         this._postMessage(message);

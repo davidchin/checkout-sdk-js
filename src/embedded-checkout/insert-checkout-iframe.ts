@@ -1,13 +1,18 @@
 import { iframeResizer, IFrameComponent } from 'iframe-resizer';
 
-import { InvalidArgumentError, TimeoutError } from '../common/error/errors';
-
 import { EmbeddedCheckoutEventType } from './embedded-checkout-events';
+import { NotEmbeddableError } from './errors';
 import parseOrigin from './parse-origin';
 
 const LOAD_TIMEOUT_INTERVAL = 5000;
 
 export default function insertCheckoutIframe(src: string, containerId: string): Promise<IFrameComponent> {
+    const container = document.getElementById(containerId);
+
+    if (!container) {
+        throw new NotEmbeddableError('Unable to embed the checkout form because the container element could not be found.');
+    }
+
     const iframe = document.createElement('iframe');
 
     iframe.src = src;
@@ -15,9 +20,14 @@ export default function insertCheckoutIframe(src: string, containerId: string): 
     iframe.style.display = 'none';
     iframe.style.width = '100%';
 
-    getContainer(containerId).appendChild(iframe);
+    container.appendChild(iframe);
 
-    return toResizableIframe(iframe);
+    return toResizableIframe(iframe)
+        .catch(error => {
+            container.removeChild(iframe);
+
+            throw error;
+        });
 }
 
 function toResizableIframe(iframe: HTMLIFrameElement): Promise<IFrameComponent> {
@@ -25,7 +35,7 @@ function toResizableIframe(iframe: HTMLIFrameElement): Promise<IFrameComponent> 
     // Instead, listen to the `load` inside the iframe and let the parent frame know when it happens.
     return new Promise((resolve, reject) => {
         const timeout = window.setTimeout(() => {
-            reject(new TimeoutError());
+            reject(new NotEmbeddableError('Unable to embed the checkout form because it could not be loaded.'));
         }, LOAD_TIMEOUT_INTERVAL);
 
         const handleMessage = (event: MessageEvent) => {
@@ -50,14 +60,4 @@ function toResizableIframe(iframe: HTMLIFrameElement): Promise<IFrameComponent> 
 
         window.addEventListener('message', handleMessage);
     });
-}
-
-function getContainer(containerId: string): HTMLElement {
-    const container = document.getElementById(containerId);
-
-    if (!container) {
-        throw new InvalidArgumentError('Unable to insert iframe because container cannot be found.');
-    }
-
-    return container;
 }

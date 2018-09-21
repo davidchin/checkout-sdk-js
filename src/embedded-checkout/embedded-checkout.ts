@@ -1,6 +1,6 @@
 import { IFrameComponent } from 'iframe-resizer';
 
-import { EmbeddedCheckoutEventMap } from './embedded-checkout-events';
+import { EmbeddedCheckoutEventMap, EmbeddedCheckoutEventType } from './embedded-checkout-events';
 import EmbeddedCheckoutListener from './embedded-checkout-listener';
 import EmbeddedCheckoutOptions from './embedded-checkout-options';
 import insertCheckoutIframe from './insert-checkout-iframe';
@@ -16,6 +16,22 @@ export default class EmbeddedCheckout {
     ) {
         this._isAttached = false;
         this._messageListener = new EmbeddedCheckoutListener(parseOrigin(this._options.url));
+
+        if (this._options.onComplete) {
+            this.on(EmbeddedCheckoutEventType.CheckoutComplete, this._options.onComplete);
+        }
+
+        if (this._options.onError) {
+            this.on(EmbeddedCheckoutEventType.CheckoutError, this._options.onError);
+        }
+
+        if (this._options.onReady) {
+            this.on(EmbeddedCheckoutEventType.CheckoutReady, this._options.onReady);
+        }
+
+        if (this._options.onLoad) {
+            this.on(EmbeddedCheckoutEventType.CheckoutLoaded, this._options.onLoad);
+        }
     }
 
     attach(): Promise<this> {
@@ -31,6 +47,14 @@ export default class EmbeddedCheckout {
                 this._iframe = iframe;
 
                 return this;
+            })
+            .catch(error => {
+                this._messageListener.trigger({
+                    type: EmbeddedCheckoutEventType.CheckoutError,
+                    payload: error,
+                });
+
+                throw error;
             });
     }
 

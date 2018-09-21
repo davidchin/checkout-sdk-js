@@ -1,7 +1,4 @@
-import { Checkout } from '../checkout';
-
 export enum EmbeddedCheckoutEventType {
-    CheckoutChanged = 'CHECKOUT_CHANGED',
     CheckoutComplete = 'CHECKOUT_COMPLETE',
     CheckoutError = 'CHECKOUT_ERROR',
     CheckoutLoaded = 'CHECKOUT_LOADED',
@@ -9,47 +6,36 @@ export enum EmbeddedCheckoutEventType {
 }
 
 export interface EmbeddedCheckoutEventMap {
-    [EmbeddedCheckoutEventType.CheckoutChanged]: EmbeddedCheckoutChangedEvent;
     [EmbeddedCheckoutEventType.CheckoutComplete]: EmbeddedCheckoutCompleteEvent;
     [EmbeddedCheckoutEventType.CheckoutError]: EmbeddedCheckoutErrorEvent;
     [EmbeddedCheckoutEventType.CheckoutLoaded]: EmbeddedCheckoutLoadedEvent;
     [EmbeddedCheckoutEventType.CheckoutReady]: EmbeddedCheckoutReadyEvent;
 }
 
-export interface EmbeddedCheckoutEvent {
-    type: EmbeddedCheckoutEventType;
-    payload?: any;
-}
+export type EmbeddedCheckoutEvent = (
+    EmbeddedCheckoutCompleteEvent |
+    EmbeddedCheckoutErrorEvent |
+    EmbeddedCheckoutLoadedEvent |
+    EmbeddedCheckoutReadyEvent
+);
 
-export interface EmbeddedCheckoutChangedEvent extends EmbeddedCheckoutEvent {
-    type: EmbeddedCheckoutEventType.CheckoutChanged;
-    payload: {
-        checkout: Checkout;
-    };
-}
-
-export interface EmbeddedCheckoutCompleteEvent extends EmbeddedCheckoutEvent {
+export interface EmbeddedCheckoutCompleteEvent {
     type: EmbeddedCheckoutEventType.CheckoutComplete;
-    payload: {
-        checkout: Checkout;
-    };
 }
 
-export interface EmbeddedCheckoutErrorEvent extends EmbeddedCheckoutEvent {
+export interface EmbeddedCheckoutErrorEvent {
     type: EmbeddedCheckoutEventType.CheckoutError;
     payload: {
         message: string;
         type?: string;
+        subtype?: string;
     };
 }
 
-export interface EmbeddedCheckoutLoadedEvent extends EmbeddedCheckoutEvent {
+export interface EmbeddedCheckoutLoadedEvent {
     type: EmbeddedCheckoutEventType.CheckoutLoaded;
 }
 
-export interface EmbeddedCheckoutReadyEvent extends EmbeddedCheckoutEvent {
+export interface EmbeddedCheckoutReadyEvent {
     type: EmbeddedCheckoutEventType.CheckoutReady;
-    payload: {
-        checkout: Checkout;
-    };
 }
