@@ -2075,6 +2075,32 @@ export declare function createCheckoutService(options?: CheckoutServiceOptions):
 export declare function createCurrencyService(config: StoreConfig): CurrencyService;
 
 /**
+ * Create an instance of `EmbeddedCheckoutMessenger`.
+ *
+ * The object is responsible for posting messages to the parent window from the
+ * iframe when certain events have occurred. For example, when the checkout
+ * form is first loaded, you should notify the parent window about it.
+ *
+ * The iframe can only be embedded in domains that are allowed by the store.
+ *
+ * ```ts
+ * const messenger = createEmbeddedCheckoutMessenger({
+ *     parentOrigin: 'https://some/website',
+ * });
+ *
+ * messenger.postFrameLoaded();
+ * ```
+ *
+ * Please note that this feature is currently in an early stage of development.
+ * Therefore the API is unstable and not ready for public consumption.
+ *
+ * @alpha
+ * @param options - Options for creating `EmbeddedCheckoutMessenger`
+ * @returns - An instance of `EmbeddedCheckoutMessenger`
+ */
+export declare function createEmbeddedCheckoutMessenger(options: EmbeddedCheckoutMessengerOptions): EmbeddedCheckoutMessenger;
+
+/**
  * Creates an instance of `LanguageService`.
  *
  * ```js
@@ -2180,6 +2206,12 @@ declare interface CustomerRequestOptions extends RequestOptions {
     methodId?: string;
 }
 
+declare interface CustomError extends Error {
+    message: string;
+    type: string;
+    subtype?: string;
+}
+
 declare interface DigitalItem extends LineItem {
     downloadFileUrls: string[];
     downloadPageUrl: string;
@@ -2189,6 +2221,112 @@ declare interface DigitalItem extends LineItem {
 declare interface Discount {
     id: string;
     discountedAmount: number;
+}
+
+/**
+ * Embed the checkout form in an iframe.
+ *
+ * Once the iframe is embedded, it will automatically resize according to the
+ * size of the checkout form. It will also notify the parent window when certain
+ * events have occurred. i.e.: when the form is loaded and ready to be used.
+ *
+ * ```js
+ * embedCheckout({
+ *     url: 'https://checkout/url',
+ *     container: 'container-id',
+ * });
+ * ```
+ *
+ * Please note that this feature is currently in an early stage of development.
+ * Therefore the API is unstable and not ready for public consumption.
+ *
+ * @alpha
+ * @param options - Options for embedding the checkout form.
+ * @returns A promise that resolves to an instance of `EmbeddedCheckout`.
+ */
+export declare function embedCheckout(options: EmbeddedCheckoutOptions): Promise<EmbeddedCheckout>;
+
+declare class EmbeddedCheckout {
+    private _iframeCreator;
+    private _messageListener;
+    private _options;
+    private _iframe?;
+    private _isAttached;
+    attach(): Promise<this>;
+    detach(): void;
+    on<TType extends keyof EmbeddedCheckoutEventMap>(type: TType, listener: (event: EmbeddedCheckoutEventMap[TType]) => void): void;
+    off<TType extends keyof EmbeddedCheckoutEventMap>(type: TType, listener: (event: EmbeddedCheckoutEventMap[TType]) => void): void;
+}
+
+declare interface EmbeddedCheckoutCompleteEvent {
+    type: EmbeddedCheckoutEventType.CheckoutComplete;
+}
+
+declare interface EmbeddedCheckoutError {
+    message: string;
+    type?: string;
+    subtype?: string;
+}
+
+declare interface EmbeddedCheckoutErrorEvent {
+    type: EmbeddedCheckoutEventType.CheckoutError;
+    payload: EmbeddedCheckoutError;
+}
+
+declare interface EmbeddedCheckoutEventMap {
+    [EmbeddedCheckoutEventType.CheckoutComplete]: EmbeddedCheckoutCompleteEvent;
+    [EmbeddedCheckoutEventType.CheckoutError]: EmbeddedCheckoutErrorEvent;
+    [EmbeddedCheckoutEventType.CheckoutLoaded]: EmbeddedCheckoutLoadedEvent;
+    [EmbeddedCheckoutEventType.FrameError]: EmbeddedCheckoutFrameErrorEvent;
+    [EmbeddedCheckoutEventType.FrameLoaded]: EmbeddedCheckoutFrameLoadedEvent;
+}
+
+declare enum EmbeddedCheckoutEventType {
+    CheckoutComplete = "CHECKOUT_COMPLETE",
+    CheckoutError = "CHECKOUT_ERROR",
+    CheckoutLoaded = "CHECKOUT_LOADED",
+    FrameError = "FRAME_ERROR",
+    FrameLoaded = "FRAME_LOADED"
+}
+
+declare interface EmbeddedCheckoutFrameErrorEvent {
+    type: EmbeddedCheckoutEventType.FrameError;
+    payload: EmbeddedCheckoutError;
+}
+
+declare interface EmbeddedCheckoutFrameLoadedEvent {
+    type: EmbeddedCheckoutEventType.FrameLoaded;
+}
+
+declare interface EmbeddedCheckoutLoadedEvent {
+    type: EmbeddedCheckoutEventType.CheckoutLoaded;
+}
+
+declare class EmbeddedCheckoutMessenger {
+    private _parentOrigin;
+    private _parentWindow;
+    postComplete(): void;
+    postError(payload: Error | CustomError): void;
+    postFrameError(payload: Error | CustomError): void;
+    postFrameLoaded(): void;
+    postLoaded(): void;
+    private _transformError;
+    private _notifyParent;
+}
+
+declare interface EmbeddedCheckoutMessengerOptions {
+    parentOrigin: string;
+    parentWindow?: Window;
+}
+
+declare interface EmbeddedCheckoutOptions {
+    containerId: string;
+    url: string;
+    onComplete?(event: EmbeddedCheckoutCompleteEvent): void;
+    onError?(event: EmbeddedCheckoutErrorEvent): void;
+    onFrameError?(event: EmbeddedCheckoutFrameErrorEvent): void;
+    onFrameLoad?(event: EmbeddedCheckoutFrameLoadedEvent): void;
+    onLoad?(event: EmbeddedCheckoutLoadedEvent): void;
 }
 
 declare interface FormField {
@@ -2379,6 +2517,7 @@ declare interface LineItem {
     name: string;
     url: string;
     quantity: number;
+    brand: string;
     isTaxable: boolean;
     imageUrl: string;
     discounts: Array<{
@@ -2758,7 +2897,7 @@ declare interface SquarePaymentInitializeOptions {
     onError?(errors?: NonceGenerationError[]): void;
 }
 
-declare class StandardError extends Error {
+declare class StandardError extends Error implements CustomError {
     type: string;
     constructor(message?: string);
 }
