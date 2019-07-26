@@ -1,4 +1,4 @@
-import { BillingAddressSelector } from '../billing';
+import { createBillingAddressSelectorFactory } from '../billing';
 import { CartSelector } from '../cart';
 import { CheckoutButtonSelector } from '../checkout-buttons';
 import { createFreezeProxies } from '../common/utility';
@@ -19,7 +19,9 @@ import CheckoutStoreState from './checkout-store-state';
 import InternalCheckoutSelectors from './internal-checkout-selectors';
 
 export default function createInternalCheckoutSelectors(state: CheckoutStoreState, options: CheckoutStoreOptions = {}): InternalCheckoutSelectors {
-    const billingAddress = new BillingAddressSelector(state.billingAddress);
+    const createBillingAddressSelector = createBillingAddressSelectorFactory();
+
+    const billingAddress = createBillingAddressSelector(state.billingAddress);
     const cart = new CartSelector(state.cart);
     const checkoutButton = new CheckoutButtonSelector(state.checkoutButton);
     const config = new ConfigSelector(state.config);
