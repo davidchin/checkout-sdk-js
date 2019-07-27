@@ -11,7 +11,7 @@ import { createOrderSelectorFactory } from '../order';
 import { createPaymentMethodSelectorFactory, createPaymentSelectorFactory, PaymentStrategySelector } from '../payment';
 import { createInstrumentSelectorFactory } from '../payment/instrument';
 import { createRemoteCheckoutSelectorFactory } from '../remote-checkout';
-import { createConsignmentSelectorFactory, createShippingAddressSelectorFactory, ShippingCountrySelector, ShippingStrategySelector } from '../shipping';
+import { createConsignmentSelectorFactory, createShippingAddressSelectorFactory, createShippingCountrySelectorFactory, ShippingStrategySelector } from '../shipping';
 
 import { createCheckoutSelectorFactory } from './checkout-selector';
 import { CheckoutStoreOptions } from './checkout-store';
@@ -33,6 +33,7 @@ export default function createInternalCheckoutSelectors(state: CheckoutStoreStat
     const createPaymentMethodSelector = createPaymentMethodSelectorFactory();
     const createShippingAddressSelector = createShippingAddressSelectorFactory();
     const createRemoteCheckoutSelector = createRemoteCheckoutSelectorFactory();
+    const createShippingCountrySelector = createShippingCountrySelectorFactory();
     const createConsignmentSelector = createConsignmentSelectorFactory();
     const createCheckoutSelector = createCheckoutSelectorFactory();
     const createOrderSelector = createOrderSelectorFactory();
@@ -53,7 +54,7 @@ export default function createInternalCheckoutSelectors(state: CheckoutStoreStat
     const paymentStrategies = new PaymentStrategySelector(state.paymentStrategies);
     const shippingAddress = createShippingAddressSelector(state.consignments);
     const remoteCheckout = createRemoteCheckoutSelector(state.remoteCheckout);
-    const shippingCountries = new ShippingCountrySelector(state.shippingCountries);
+    const shippingCountries = createShippingCountrySelector(state.shippingCountries);
     const shippingStrategies = new ShippingStrategySelector(state.shippingStrategies);
 
     // Compose selectors
