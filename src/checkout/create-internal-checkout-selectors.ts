@@ -8,7 +8,7 @@ import { createCustomerSelectorFactory, createCustomerStrategySelectorFactory } 
 import { createFormSelectorFactory } from '../form';
 import { createCountrySelectorFactory } from '../geography';
 import { createOrderSelectorFactory } from '../order';
-import { createPaymentSelectorFactory, PaymentMethodSelector, PaymentStrategySelector } from '../payment';
+import { createPaymentMethodSelectorFactory, createPaymentSelectorFactory, PaymentStrategySelector } from '../payment';
 import { createInstrumentSelectorFactory } from '../payment/instrument';
 import { RemoteCheckoutSelector } from '../remote-checkout';
 import { createConsignmentSelectorFactory, ShippingAddressSelector, ShippingCountrySelector, ShippingStrategySelector } from '../shipping';
@@ -30,6 +30,7 @@ export default function createInternalCheckoutSelectors(state: CheckoutStoreStat
     const createFormSelector = createFormSelectorFactory();
     const createGiftCertificateSelector = createGiftCertificateSelectorFactory();
     const createInstrumentSelector = createInstrumentSelectorFactory();
+    const createPaymentMethodSelector = createPaymentMethodSelectorFactory();
     const createConsignmentSelector = createConsignmentSelectorFactory();
     const createCheckoutSelector = createCheckoutSelectorFactory();
     const createOrderSelector = createOrderSelectorFactory();
@@ -46,7 +47,7 @@ export default function createInternalCheckoutSelectors(state: CheckoutStoreStat
     const form = createFormSelector(state.config);
     const giftCertificates = createGiftCertificateSelector(state.giftCertificates);
     const instruments = createInstrumentSelector(state.instruments);
-    const paymentMethods = new PaymentMethodSelector(state.paymentMethods);
+    const paymentMethods = createPaymentMethodSelector(state.paymentMethods);
     const paymentStrategies = new PaymentStrategySelector(state.paymentStrategies);
     const shippingAddress = new ShippingAddressSelector(state.consignments);
     const remoteCheckout = new RemoteCheckoutSelector(state.remoteCheckout);
