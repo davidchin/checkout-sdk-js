@@ -10,7 +10,7 @@ import { createCountrySelectorFactory } from '../geography';
 import { createOrderSelectorFactory } from '../order';
 import { createPaymentMethodSelectorFactory, createPaymentSelectorFactory, PaymentStrategySelector } from '../payment';
 import { createInstrumentSelectorFactory } from '../payment/instrument';
-import { RemoteCheckoutSelector } from '../remote-checkout';
+import { createRemoteCheckoutSelectorFactory } from '../remote-checkout';
 import { createConsignmentSelectorFactory, createShippingAddressSelectorFactory, ShippingCountrySelector, ShippingStrategySelector } from '../shipping';
 
 import { createCheckoutSelectorFactory } from './checkout-selector';
@@ -32,6 +32,7 @@ export default function createInternalCheckoutSelectors(state: CheckoutStoreStat
     const createInstrumentSelector = createInstrumentSelectorFactory();
     const createPaymentMethodSelector = createPaymentMethodSelectorFactory();
     const createShippingAddressSelector = createShippingAddressSelectorFactory();
+    const createRemoteCheckoutSelector = createRemoteCheckoutSelectorFactory();
     const createConsignmentSelector = createConsignmentSelectorFactory();
     const createCheckoutSelector = createCheckoutSelectorFactory();
     const createOrderSelector = createOrderSelectorFactory();
@@ -51,7 +52,7 @@ export default function createInternalCheckoutSelectors(state: CheckoutStoreStat
     const paymentMethods = createPaymentMethodSelector(state.paymentMethods);
     const paymentStrategies = new PaymentStrategySelector(state.paymentStrategies);
     const shippingAddress = createShippingAddressSelector(state.consignments);
-    const remoteCheckout = new RemoteCheckoutSelector(state.remoteCheckout);
+    const remoteCheckout = createRemoteCheckoutSelector(state.remoteCheckout);
     const shippingCountries = new ShippingCountrySelector(state.shippingCountries);
     const shippingStrategies = new ShippingStrategySelector(state.shippingStrategies);
 
