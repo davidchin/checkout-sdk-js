@@ -4,7 +4,7 @@ import { createCheckoutButtonSelectorFactory } from '../checkout-buttons';
 import { createFreezeProxies } from '../common/utility';
 import { createConfigSelectorFactory } from '../config';
 import { createCouponSelectorFactory, GiftCertificateSelector } from '../coupon';
-import { createCustomerSelectorFactory, CustomerStrategySelector } from '../customer';
+import { createCustomerSelectorFactory, createCustomerStrategySelectorFactory } from '../customer';
 import { FormSelector } from '../form';
 import { createCountrySelectorFactory } from '../geography';
 import { createOrderSelectorFactory } from '../order';
@@ -26,6 +26,7 @@ export default function createInternalCheckoutSelectors(state: CheckoutStoreStat
     const createCountrySelector = createCountrySelectorFactory();
     const createCouponSelector = createCouponSelectorFactory();
     const createCustomerSelector = createCustomerSelectorFactory();
+    const createCustomerStrategySelector = createCustomerStrategySelectorFactory();
     const createOrderSelector = createOrderSelectorFactory();
 
     const billingAddress = createBillingAddressSelector(state.billingAddress);
@@ -35,7 +36,7 @@ export default function createInternalCheckoutSelectors(state: CheckoutStoreStat
     const countries = createCountrySelector(state.countries);
     const coupons = createCouponSelector(state.coupons);
     const customer = createCustomerSelector(state.customer);
-    const customerStrategies = new CustomerStrategySelector(state.customerStrategies);
+    const customerStrategies = createCustomerStrategySelector(state.customerStrategies);
     const form = new FormSelector(state.config);
     const giftCertificates = new GiftCertificateSelector(state.giftCertificates);
     const instruments = new InstrumentSelector(state.instruments);
