@@ -11,7 +11,7 @@ import { createOrderSelectorFactory } from '../order';
 import { createPaymentMethodSelectorFactory, createPaymentSelectorFactory, createPaymentStrategySelectorFactory } from '../payment';
 import { createInstrumentSelectorFactory } from '../payment/instrument';
 import { createRemoteCheckoutSelectorFactory } from '../remote-checkout';
-import { createConsignmentSelectorFactory, createShippingAddressSelectorFactory, createShippingCountrySelectorFactory, ShippingStrategySelector } from '../shipping';
+import { createConsignmentSelectorFactory, createShippingAddressSelectorFactory, createShippingCountrySelectorFactory, createShippingStrategySelectorFactory } from '../shipping';
 
 import { createCheckoutSelectorFactory } from './checkout-selector';
 import { CheckoutStoreOptions } from './checkout-store';
@@ -35,6 +35,7 @@ export default function createInternalCheckoutSelectors(state: CheckoutStoreStat
     const createShippingAddressSelector = createShippingAddressSelectorFactory();
     const createRemoteCheckoutSelector = createRemoteCheckoutSelectorFactory();
     const createShippingCountrySelector = createShippingCountrySelectorFactory();
+    const createShippingStrategySelector = createShippingStrategySelectorFactory();
     const createConsignmentSelector = createConsignmentSelectorFactory();
     const createCheckoutSelector = createCheckoutSelectorFactory();
     const createOrderSelector = createOrderSelectorFactory();
@@ -56,7 +57,7 @@ export default function createInternalCheckoutSelectors(state: CheckoutStoreStat
     const shippingAddress = createShippingAddressSelector(state.consignments);
     const remoteCheckout = createRemoteCheckoutSelector(state.remoteCheckout);
     const shippingCountries = createShippingCountrySelector(state.shippingCountries);
-    const shippingStrategies = new ShippingStrategySelector(state.shippingStrategies);
+    const shippingStrategies = createShippingStrategySelector(state.shippingStrategies);
 
     // Compose selectors
     const consignments = createConsignmentSelector(state.consignments, cart);
