@@ -22,7 +22,7 @@ import CheckoutActionCreator from './checkout-action-creator';
 import CheckoutParams from './checkout-params';
 import CheckoutSelectors from './checkout-selectors';
 import CheckoutStore from './checkout-store';
-import createCheckoutSelectors from './create-checkout-selectors';
+import createCheckoutSelectors, { createCheckoutSelectorsFactory, CheckoutSelectorsFactory } from './create-checkout-selectors';
 import createCheckoutServiceErrorTransformer from './create-checkout-service-error-transformer';
 import InternalCheckoutSelectors from './internal-checkout-selectors';
 
@@ -37,6 +37,7 @@ import InternalCheckoutSelectors from './internal-checkout-selectors';
 export default class CheckoutService {
     private _state: CheckoutSelectors;
     private _errorTransformer: ErrorMessageTransformer;
+    private _selectorsFactory: CheckoutSelectorsFactory;
 
     /**
      * @internal
@@ -60,8 +61,9 @@ export default class CheckoutService {
         private _shippingStrategyActionCreator: ShippingStrategyActionCreator,
         private _spamProtectionActionCreator: SpamProtectionActionCreator
     ) {
-        this._state = createCheckoutSelectors(this._store.getState());
         this._errorTransformer = createCheckoutServiceErrorTransformer();
+        this._selectorsFactory = createCheckoutSelectorsFactory();
+        this._state = this._selectorsFactory(this._store.getState());
 
         this._store.subscribe(state => {
             this._state = createCheckoutSelectors(state);
