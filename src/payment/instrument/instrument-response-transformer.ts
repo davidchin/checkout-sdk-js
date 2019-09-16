@@ -62,8 +62,9 @@ export default class InstrumentResponseTransformer {
         const { data: body, ...payload } = response;
 
         return {
-            ...payload,
+            headers: {},
             body,
+            ...payload,
         };
     }
 }
