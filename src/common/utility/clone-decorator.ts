@@ -1,5 +1,6 @@
 import { cloneDeep, memoize } from 'lodash';
 
+/* eslint-disable import/export */
 export default function cloneDecorator<T extends Method>(target: object, key: string, descriptor: TypedPropertyDescriptor<T>): TypedPropertyDescriptor<T>;
 export default function cloneDecorator<T extends Constructor<object>>(target: T): T;
 export default function cloneDecorator(target: any, key?: any, descriptor?: any): any {
@@ -9,6 +10,7 @@ export default function cloneDecorator(target: any, key?: any, descriptor?: any)
 
     return cloneMethodDecorator(target, key, descriptor);
 }
+/* eslint-enable import/export */
 
 export function cloneClassDecorator<T extends Constructor<object>>(target: T): T {
     const decoratedTarget = class extends target {};

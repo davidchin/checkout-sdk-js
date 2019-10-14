@@ -8,6 +8,7 @@ export interface ArrayReplaceOptions {
     matchObject(objectA: any, objectB: any): boolean;
 }
 
+/* eslint-disable import/export */
 export default function arrayReplace<T>(currentArray: T[] | undefined, newArray: T[], options?: ArrayReplaceOptions): T[];
 export default function arrayReplace<T>(currentArray: T[], newArray?: T[], options?: ArrayReplaceOptions): undefined;
 export default function arrayReplace<T>(currentArray?: T[], newArray?: T[], options?: ArrayReplaceOptions): T[] | undefined;
@@ -88,3 +89,4 @@ export default function arrayReplace<T>(currentArray?: T[], newArray?: T[], opti
 
     return result;
 }
+/* eslint-enable import/export */

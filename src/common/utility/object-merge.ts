@@ -4,6 +4,7 @@ import arrayReplace from './array-replace';
 import isPlainObject from './is-plain-object';
 import objectSet from './object-set';
 
+/* eslint-disable import/export */
 export default function objectMerge<T extends object>(currentObject: T, newObject?: Partial<T>): T;
 export default function objectMerge<T extends object>(currentObject: T | undefined, newObject: Partial<T>): Partial<T>;
 export default function objectMerge<T extends object>(currentObject?: T, newObject?: Partial<T>): T | undefined;
@@ -37,3 +38,4 @@ export default function objectMerge<T extends object>(currentObject?: T, newObje
             return objectSet(result, key, newValue as any);
         }, currentObject);
 }
+/* eslint-enable import/export */

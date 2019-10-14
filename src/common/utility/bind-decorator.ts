@@ -2,6 +2,7 @@
  * Decorates a class or a method by binding all its prototype methods or itself
  * to the calling instance respectively.
  */
+/* eslint-disable import/export */
 export default function bindDecorator<T extends Method>(target: object, key: string, descriptor: TypedPropertyDescriptor<T>): TypedPropertyDescriptor<T>;
 export default function bindDecorator<T extends Constructor<object>>(target: T): T;
 export default function bindDecorator(target: any, key?: any, descriptor?: any): any {
@@ -11,6 +12,7 @@ export default function bindDecorator(target: any, key?: any, descriptor?: any):
 
     return bindMethodDecorator(target, key, descriptor);
 }
+/* eslint-enable import/export */
 
 /**
  * Decorates a class by binding all its prototype methods to the calling
