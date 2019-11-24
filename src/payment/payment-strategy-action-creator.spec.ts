@@ -10,16 +10,16 @@ import { createCheckoutStore, CheckoutRequestSender, CheckoutStore, CheckoutStor
 import { getCheckoutStoreState, getCheckoutStoreStateWithOrder } from '../checkout/checkouts.mock';
 import { MissingDataError } from '../common/error/errors';
 import { getCustomerState } from '../customer/customers.mock';
+import { HostedFormFactory } from '../hosted-form';
 import { OrderActionCreator, OrderActionType, OrderRequestSender } from '../order';
 import { OrderFinalizationNotRequiredError } from '../order/errors';
 import { getOrderRequestBody } from '../order/internal-orders.mock';
 import { getOrderState } from '../order/orders.mock';
 import { createSpamProtection, GoogleRecaptcha, SpamProtectionActionCreator, SpamProtectionActionType } from '../order/spam-protection';
 
+import { PaymentActionCreator, PaymentRequestSender } from '.';
 import createPaymentStrategyRegistry from './create-payment-strategy-registry';
-import PaymentActionCreator from './payment-action-creator';
 import { getPaymentMethod } from './payment-methods.mock';
-import PaymentRequestSender from './payment-request-sender';
 import PaymentRequestTransformer from './payment-request-transformer';
 import PaymentStrategyActionCreator from './payment-strategy-action-creator';
 import { PaymentStrategyActionType } from './payment-strategy-actions';
@@ -59,7 +59,8 @@ describe('PaymentStrategyActionCreator', () => {
                 new PaymentRequestSender(createPaymentClient()),
                 orderActionCreator,
                 new PaymentRequestTransformer()
-            )
+            ),
+            new HostedFormFactory(store)
         );
         noPaymentDataStrategy = new NoPaymentDataRequiredPaymentStrategy(
             store,
