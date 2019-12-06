@@ -1,13 +1,25 @@
+import { omit, without } from 'lodash';
+
+import HostedFieldType from '../hosted-field-type';
+
 import HostedInputValidateResults from './hosted-input-validate-results';
 import HostedInputValidator from './hosted-input-validator';
 import HostedInputValues from './hosted-input-values';
 
 describe('HostedInputValidator', () => {
+    let fields: HostedFieldType[];
     let validData: HostedInputValues;
     let validResults: HostedInputValidateResults;
     let validator: HostedInputValidator;
 
     beforeEach(() => {
+        fields = [
+            HostedFieldType.CardCode,
+            HostedFieldType.CardExpiry,
+            HostedFieldType.CardName,
+            HostedFieldType.CardNumber,
+        ];
+
         validData = {
             cardCode: '123',
             cardExpiry: '10 / 25',
@@ -18,6 +30,7 @@ describe('HostedInputValidator', () => {
         validResults = {
             isValid: true,
             errors: {
+                cardCode: [],
                 cardExpiry: [],
                 cardName: [],
                 cardNumber: [],
@@ -59,6 +72,14 @@ describe('HostedInputValidator', () => {
             });
     });
 
+    it('does not return error if card number is not required', async () => {
+        expect(await validator.validate({ ...validData, cardNumber: '' }, without(fields, HostedFieldType.CardNumber)))
+            .toEqual({
+                ...validResults,
+                errors: omit(validResults.errors, HostedFieldType.CardNumber),
+            });
+    });
+
     it('returns error if card name is missing', async () => {
         expect(await validator.validate({ ...validData, cardName: '' }))
             .toEqual({
@@ -69,6 +90,14 @@ describe('HostedInputValidator', () => {
                         { fieldType: 'cardName', type: 'required', message: 'Full name is required' },
                     ],
                 },
+            });
+    });
+
+    it('does not return error if card name is not required', async () => {
+        expect(await validator.validate({ ...validData, cardName: '' }, without(fields, HostedFieldType.CardName)))
+            .toEqual({
+                ...validResults,
+                errors: omit(validResults.errors, HostedFieldType.CardName),
             });
     });
 
@@ -112,8 +141,16 @@ describe('HostedInputValidator', () => {
             });
     });
 
+    it('does not return error if expiry date is not required', async () => {
+        expect(await validator.validate({ ...validData, cardExpiry: '' }, without(fields, HostedFieldType.CardExpiry)))
+            .toEqual({
+                ...validResults,
+                errors: omit(validResults.errors, HostedFieldType.CardExpiry),
+            });
+    });
+
     it('returns error if card code is missing when required', async () => {
-        expect(await validator.validate({ ...validData, cardCode: '' }, { isCardCodeRequired: true }))
+        expect(await validator.validate({ ...validData, cardCode: '' }))
             .toEqual({
                 isValid: false,
                 errors: {
@@ -127,7 +164,7 @@ describe('HostedInputValidator', () => {
     });
 
     it('returns error if card code is invalid when required', async () => {
-        expect(await validator.validate({ ...validData, cardCode: '99999' }, { isCardCodeRequired: true }))
+        expect(await validator.validate({ ...validData, cardCode: '99999' }))
             .toEqual({
                 isValid: false,
                 errors: {
@@ -141,7 +178,7 @@ describe('HostedInputValidator', () => {
 
     it('returns error if card code is invalid for given card number', async () => {
         // Card code for American Express should have 4 digts
-        expect(await validator.validate({ ...validData, cardCode: '123', cardNumber: '378282246310005' }, { isCardCodeRequired: true }))
+        expect(await validator.validate({ ...validData, cardCode: '123', cardNumber: '378282246310005' }))
             .toEqual({
                 isValid: false,
                 errors: {
@@ -154,7 +191,20 @@ describe('HostedInputValidator', () => {
     });
 
     it('does not return error if card code is not required', async () => {
-        expect(await validator.validate({ ...validData, cardCode: '' }))
-            .toEqual(validResults);
+        expect(await validator.validate({ ...validData, cardCode: '' }, without(fields, HostedFieldType.CardCode)))
+            .toEqual({
+                ...validResults,
+                errors: omit(validResults.errors, HostedFieldType.CardCode),
+            });
+    });
+
+    it('does not return invalid card code error if card code is provided before card number', async () => {
+        expect(await validator.validate({ ...validData, cardCode: '123', cardNumber: '' }))
+            .toEqual({
+                isValid: false,
+                errors: expect.objectContaining({
+                    cardCode: [],
+                }),
+            });
     });
 });

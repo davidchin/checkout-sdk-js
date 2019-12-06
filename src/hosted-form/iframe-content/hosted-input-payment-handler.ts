@@ -22,9 +22,7 @@ export default class HostedInputPaymentHandler {
 
     handle: (event: HostedFieldSubmitRequestEvent) => Promise<void> = async ({ payload: { data, fields } }) => {
         const values = this._inputAggregator.getInputValues(field => fields.indexOf(field.getType()) !== -1);
-        const results = await this._inputValidator.validate(values, {
-            isCardCodeRequired: data.paymentMethod && data.paymentMethod.config.cardCode === true,
-        });
+        const results = await this._inputValidator.validate(values, fields);
 
         this._eventPoster.post({
             type: HostedInputEventType.Validated,

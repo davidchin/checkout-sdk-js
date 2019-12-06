@@ -89,9 +89,9 @@ export default class PaymentRequestTransformer {
             payment: {
                 ...payment,
                 ccCvv: values.cardCode,
-                ccExpiry: this._cardExpiryFormatter.toObject(values.cardExpiry),
-                ccName: values.cardName,
-                ccNumber: this._cardNumberFormatter.unformat(values.cardNumber),
+                ccExpiry: this._cardExpiryFormatter.toObject(values.cardExpiry || ''),
+                ccName: values.cardName || '',
+                ccNumber: this._cardNumberFormatter.unformat(values.cardNumber || ''),
             },
             quoteMeta: {
                 request: {
