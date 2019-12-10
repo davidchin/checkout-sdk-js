@@ -49,8 +49,8 @@ export default class HostedInputValidator {
         }
 
         if (includes(requiredFields, HostedFieldType.CardNumberVerification)) {
-            schemas.cardNumber = this._getCardNumberVerificationSchema();
-            results.errors.cardNumber = [];
+            schemas.cardNumberVerification = this._getCardNumberVerificationSchema();
+            results.errors.cardNumberVerification = [];
         }
 
         try {
@@ -99,6 +99,7 @@ export default class HostedInputValidator {
             .required('CVV is required')
             .test({
                 message: 'CVV must be valid',
+                name: 'invalid_card_code',
                 test: (value = '') => {
                     const cardType = this._cardInstrument && this._mapFromInstrumentCardType(this._cardInstrument.brand);
                     const cardInfo = cardType && getTypeInfo(cardType);
@@ -139,10 +140,12 @@ export default class HostedInputValidator {
             .required('Credit card number is required')
             .test({
                 message: 'Credit card number must be valid',
+                name: 'invalid_card_number',
                 test: (value = '') => number(value).isValid,
             })
             .test({
                 message: 'The card number entered does not match the card stored in your account',
+                name: 'mismatched_card_number',
                 test: (value = '') => this._cardInstrument ?
                     value.slice(-this._cardInstrument.last4.length) === this._cardInstrument.last4 :
                     false,
