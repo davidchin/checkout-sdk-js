@@ -94,7 +94,7 @@ export default class HostedField {
         this._eventListener.stopListen();
     }
 
-    async submit(
+    async submitForm(
         fields: HostedFieldType[],
         data: HostedFormOrderData
     ): Promise<void> {
@@ -115,7 +115,7 @@ export default class HostedField {
         }
     }
 
-    async validate(): Promise<void> {
+    async validateForm(): Promise<void> {
         const { payload } = await this._eventPoster.post<HostedInputValidateEvent>({
             type: HostedFieldEventType.ValidateRequested,
         }, {

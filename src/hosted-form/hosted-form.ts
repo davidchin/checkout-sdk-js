@@ -45,14 +45,14 @@ export default class HostedForm {
     }
 
     async submit(payload: OrderPaymentRequestBody): Promise<void> {
-        return await this._getFirstField().submit(
+        return await this._getFirstField().submitForm(
             this._fields.map(field => field.getType()),
             this._payloadTransformer.transform(payload)
         );
     }
 
     async validate(): Promise<void> {
-        return await this._getFirstField().validate();
+        return await this._getFirstField().validateForm();
     }
 
     private _getFirstField(): HostedField {
