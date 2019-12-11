@@ -15,8 +15,8 @@ export default class HostedInputValidator {
         private _cardInstrument?: CardInstrument
     ) {}
 
-    async validate(values: HostedInputValues, fields?: HostedFieldType[]): Promise<HostedInputValidateResults> {
-        const requiredFields = fields || Object.keys(values);
+    async validate(values: HostedInputValues): Promise<HostedInputValidateResults> {
+        const requiredFields = Object.keys(values);
         const schemas: { [key in keyof HostedInputValues]: StringSchema } = {};
         const results: HostedInputValidateResults = {
             errors: {},
