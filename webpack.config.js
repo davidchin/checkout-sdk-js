@@ -9,6 +9,7 @@ const outputPath = path.join(__dirname, 'dist');
 function getUmdConfig() {
     return {
         ...baseConfig,
+        name: 'umd',
         entry: libraryEntries,
         output: {
             filename: '[name].umd.js',
@@ -28,6 +29,7 @@ function getUmdConfig() {
 function getCjsConfig() {
     return {
         ...baseConfig,
+        name: 'cjs',
         entry: libraryEntries,
         externals: [
             nodeExternals()
