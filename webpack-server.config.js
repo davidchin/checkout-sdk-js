@@ -7,7 +7,7 @@ const { transformManifest } = require('./scripts/webpack');
 const { babelLoaderRule, baseConfig, libraryEntries, libraryName, srcPath } = require('./webpack-common.config');
 
 const version = require('./package.json').version;
-const versionDir = `v${semver.major(version)}`;
+const versionDir = `v${version}`;
 const outputPath = path.join(__dirname, 'dist-server', versionDir);
 
 function getServerConfig() {

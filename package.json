@@ -23,7 +23,7 @@
     "prepare": "check-node-version --node '>=6' --npm '>=6'",
     "build": "npm run bundle && npm run bundle-dts",
     "prebuild-server": "rm -rf dist-server",
-    "build-server": "webpack --config webpack-server.config.js --config-name umd && webpack --config webpack-server.config.js --config-name umd-loader",
+    "build-server": "webpack --config webpack-server.config.js --config-name umd && webpack --config webpack-server.config.js --config-name umd-loader && scripts/copy-to-major-version-folder.js",
     "prebundle": "rm -rf dist",
     "bundle": "webpack --config webpack.config.js",
     "bundle:analyze": "npm run --silent bundle -- --config-name umd --profile --json > webpack-stats.json && webpack-bundle-analyzer webpack-stats.json dist --default-sizes gzip",
