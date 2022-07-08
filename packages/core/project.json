@@ -66,6 +66,12 @@
                 "jestConfig": "packages/core/jest.config.js",
                 "passWithNoTests": true
             }
+        },
+        "auto-export": {
+            "executor": "@nrwl/workspace:run-commands",
+            "options": {
+                "command": "nx workspace-generator auto-export --projectName=core"
+            }
         }
     },
     "tags": []

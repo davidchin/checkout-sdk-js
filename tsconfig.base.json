@@ -20,7 +20,9 @@
             "@bigcommerce/checkout-sdk/apple-pay": [
                 "packages/apple-pay/src/index.ts"
             ],
-            "@bigcommerce/checkout-sdk/core": ["packages/core/src/index.ts"],
+            "@bigcommerce/checkout-sdk/core": [
+                "packages/core/src/index.ts"
+            ],
             "@bigcommerce/checkout-sdk/payment-integration": [
                 "packages/payment-integration/src/index.ts"
             ],

@@ -1,6 +1,7 @@
 import { CustomerInitializeOptions } from '@bigcommerce/checkout-sdk/payment-integration';
+import { ApplePayCustomerInitializeOptions } from '..';
 
-export function getApplePayCustomerInitializationOptions(): CustomerInitializeOptions {
+export function getApplePayCustomerInitializationOptions(): CustomerInitializeOptions & { applepay: ApplePayCustomerInitializeOptions } {
     return {
         methodId: 'applepay',
         applepay: {

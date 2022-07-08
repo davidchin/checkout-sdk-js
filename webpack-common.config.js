@@ -1,7 +1,9 @@
 const path = require('path');
 const { DefinePlugin } = require('webpack');
+const { exec } = require('child_process');
 
-const { getNextVersion } = require('./scripts/webpack');
+const { BuildHookPlugin, getNextVersion } = require('./scripts/webpack');
+const { promisify } = require('util');
 
 const srcPath = path.join(__dirname, 'packages/core/src');
 
@@ -52,6 +54,17 @@ async function getBaseConfig() {
         plugins: [
             new DefinePlugin({
                 'LIBRARY_VERSION': JSON.stringify(await getNextVersion()),
+            }),
+            new BuildHookPlugin({
+                async onBeforeCompile() {
+                    const { stdout, stderr } = await promisify(exec)('npm run auto-export');
+
+                    if (stderr) {
+                        throw new Error(stderr);
+                    }
+
+                    console.log(stdout);
+                },
             }),
         ],
     };

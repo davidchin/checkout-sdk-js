@@ -15,11 +15,12 @@ import {
     PaymentMethod,
     PaymentMethodCancelledError,
     PaymentRequestOptions,
-    PaymentStrategyNew,
+    PaymentStrategy,
     StoreConfig,
 } from "@bigcommerce/checkout-sdk/payment-integration";
 
 import ApplePaySessionFactory from "./apple-pay-session-factory";
+import ApplePayPaymentInitializeOptions from './apple-pay-payment-initialize-options';
 
 const validationEndpoint = (bigPayEndpoint: string) =>
     `${bigPayEndpoint}/api/public/v1/payments/applepay/validate_merchant`;
@@ -38,7 +39,7 @@ enum DefaultLabels {
     Subtotal = "Subtotal",
 }
 
-export default class ApplePayPaymentStrategy implements PaymentStrategyNew {
+export default class ApplePayPaymentStrategy implements PaymentStrategy {
     private _shippingLabel: string = DefaultLabels.Shipping;
     private _subTotalLabel: string = DefaultLabels.Subtotal;
 
@@ -49,7 +50,7 @@ export default class ApplePayPaymentStrategy implements PaymentStrategyNew {
     ) {}
 
     async initialize(
-        options?: PaymentInitializeOptions
+        options?: PaymentInitializeOptions & { applepay?: ApplePayPaymentInitializeOptions }
     ): Promise<PaymentIntegrationSelectors> {
         if (!options?.methodId) {
             throw new InvalidArgumentError(

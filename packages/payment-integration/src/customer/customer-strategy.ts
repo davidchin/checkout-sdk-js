@@ -1,8 +1,8 @@
-import { CustomerCredentials, CustomerInitializeOptions, CustomerRequestOptions, ExecutePaymentMethodCheckoutOptions } from '../customer';
+import { CustomerCredentials, CustomerInitializeOptions, CustomerRequestOptions, ExecutePaymentMethodCheckoutOptions } from '.';
 
 import PaymentIntegrationSelectors from '../payment-integration-selectors';
 
-export default interface CustomerWalletButtonStrategy {
+export default interface CustomerStrategy {
     signIn(credentials: CustomerCredentials, options?: CustomerRequestOptions): Promise<PaymentIntegrationSelectors>;
 
     signOut(options?: CustomerRequestOptions): Promise<PaymentIntegrationSelectors>;

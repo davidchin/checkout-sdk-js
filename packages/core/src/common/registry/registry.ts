@@ -1,3 +1,4 @@
+import Factory from './factory';
 import { InvalidArgumentError } from '../error/errors';
 
 export default class Registry<T, K extends string = string> {
@@ -5,22 +6,26 @@ export default class Registry<T, K extends string = string> {
     private _instances: { [key: string]: T };
     private _options: RegistryOptions;
 
-    constructor(options?: RegistryOptions) {
+    constructor(
+        options?: RegistryOptions
+    ) {
         this._factories = {};
         this._instances = {};
         this._options = { defaultToken: 'default', ...options };
     }
 
     get(token?: K, cacheToken?: string): T {
+        const defaultToken = this._options?.defaultToken ?? 'default';
+
         try {
             return this._getInstance(
-                token || this._options.defaultToken,
-                cacheToken || token || this._options.defaultToken
+                token || defaultToken,
+                cacheToken || token || defaultToken
             );
         } catch (error) {
             return this._getInstance(
-                this._options.defaultToken,
-                cacheToken || this._options.defaultToken
+                defaultToken,
+                cacheToken || defaultToken
             );
         }
     }
@@ -43,7 +48,8 @@ export default class Registry<T, K extends string = string> {
 
     private _getInstance(token: string, cacheToken: string): T {
         if (!this._hasInstance(cacheToken)) {
-            const factory = this._factories[token];
+            const resolvedToken = this._options?.tokenResolver?.(token, Object.keys(this._factories));
+            const factory = resolvedToken && this._factories[resolvedToken];
 
             if (!factory) {
                 throw new InvalidArgumentError(`'${token}' is not registered.`);
@@ -56,8 +62,7 @@ export default class Registry<T, K extends string = string> {
     }
 }
 
-export type Factory<T> = () => T;
-
 export interface RegistryOptions {
-    defaultToken: string;
+    defaultToken?: string;
+    tokenResolver?(token: string, registeredTokens: string[]): string | undefined;
 }

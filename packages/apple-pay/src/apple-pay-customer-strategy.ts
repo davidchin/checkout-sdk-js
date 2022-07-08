@@ -1,5 +1,5 @@
 import {
-    CustomerWalletButtonStrategy,
+    CustomerStrategy,
     PaymentMethod,
     InvalidArgumentError,
     Cart,
@@ -13,11 +13,12 @@ import {
     MissingDataErrorType,
     NotImplementedError,
     CustomerInitializeOptions,
-    ExecutePaymentMethodCheckoutOptions, 
+    ExecutePaymentMethodCheckoutOptions,
     ShippingOption,
     AddressRequestBody} from '@bigcommerce/checkout-sdk/payment-integration';
 import { RequestSender } from '@bigcommerce/request-sender';
 import { noop } from 'lodash';
+import ApplePayCustomerInitializeOptions from './apple-pay-customer-initialize-options';
 import ApplePaySessionFactory, { assertApplePayWindow } from './apple-pay-session-factory';
 
 const validationEndpoint = (bigPayEndpoint: string) => `${bigPayEndpoint}/api/public/v1/payments/applepay/validate_merchant`;
@@ -42,7 +43,7 @@ function isShippingOptions(options: ShippingOption[] | undefined): options is Sh
     return options instanceof Array;
 }
 
-export default class ApplePayCustomerStrategy implements CustomerWalletButtonStrategy {
+export default class ApplePayCustomerStrategy implements CustomerStrategy {
     private _paymentMethod?: PaymentMethod;
     private _applePayButton?: HTMLElement;
     private _onAuthorizeCallback = noop;
@@ -56,7 +57,7 @@ export default class ApplePayCustomerStrategy implements CustomerWalletButtonStr
         private _sessionFactory: ApplePaySessionFactory
     ) {}
 
-    async initialize(options: CustomerInitializeOptions): Promise<PaymentIntegrationSelectors> {
+    async initialize(options: CustomerInitializeOptions & { applepay?: ApplePayCustomerInitializeOptions }): Promise<PaymentIntegrationSelectors> {
         const { methodId, applepay }  = options;
 
         assertApplePayWindow(window);
