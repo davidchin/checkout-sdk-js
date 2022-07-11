@@ -72,6 +72,12 @@
             "options": {
                 "command": "nx workspace-generator auto-export --projectName=core"
             }
+        },
+        "extend-interface": {
+            "executor": "@nrwl/workspace:run-commands",
+            "options": {
+                "command": "nx workspace-generator extend-interface --projectName=core"
+            }
         }
     },
     "tags": []

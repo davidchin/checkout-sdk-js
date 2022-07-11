@@ -3,4 +3,4 @@ export { default as createApplePayCustomerStrategy } from "./create-apple-pay-cu
 export { default as createApplePayButtonStrategy } from "./create-apple-pay-button-strategy";
 export { default as ApplePayCustomerInitializeOptions } from './apple-pay-customer-initialize-options';
 export { default as ApplePayButtonInitializeOptions } from './apple-pay-button-initialize-options';
-export { default as ApplePayPaymentInitializeOptions } from './apple-pay-payment-initialize-options';
+export { default as ApplePayPaymentInitializeOptions, WithApplePayPaymentInitializeOptions } from './apple-pay-payment-initialize-options';

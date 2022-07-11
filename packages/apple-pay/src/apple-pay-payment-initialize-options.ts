@@ -24,3 +24,7 @@ export default interface ApplePayPaymentInitializeOptions {
      */
     subtotalLabel?: string;
 }
+
+export interface WithApplePayPaymentInitializeOptions {
+    applepay: ApplePayPaymentInitializeOptions;
+}

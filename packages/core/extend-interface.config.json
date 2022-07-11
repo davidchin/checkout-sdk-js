@@ -1,0 +1,11 @@
+{
+    "entries": [
+        {
+            "inputPath": "packages/*/src/index.ts",
+            "outputPath": "packages/core/src/generated/payment-initialize-options.ts",
+            "memberPattern": "^With.+PaymentInitializeOptions$",
+            "targetPath": "packages/core/src/payment/payment-request-options.ts",
+            "targetMemberName": "PaymentInitializeOptions"
+        }
+    ]
+}

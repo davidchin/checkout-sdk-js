@@ -28,7 +28,11 @@ export default async function autoExport({
         );
 }
 
-async function createExportDeclaration(filePath: string, outputPath: string, memberPattern: string) {
+async function createExportDeclaration(
+    filePath: string,
+    outputPath: string,
+    memberPattern: string
+): Promise<ts.ExportDeclaration | undefined> {
     const readFile = promisify(fs.readFile);
     const source = await readFile(filePath, { encoding: 'utf8' });
     const root = ts.createSourceFile(
