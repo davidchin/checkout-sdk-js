@@ -1,9 +1,7 @@
 const path = require('path');
 const { DefinePlugin } = require('webpack');
-const { exec } = require('child_process');
 
-const { BuildHookPlugin, getNextVersion } = require('./scripts/webpack');
-const { promisify } = require('util');
+const { getNextVersion } = require('./scripts/webpack');
 
 const srcPath = path.join(__dirname, 'packages/core/src');
 
