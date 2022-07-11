@@ -57,7 +57,7 @@ async function getBaseConfig() {
             }),
             new BuildHookPlugin({
                 async onBeforeCompile() {
-                    const { stdout, stderr } = await promisify(exec)('npm run auto-export');
+                    const { stdout, stderr } = await promisify(exec)('npm run generate');
 
                     if (stderr) {
                         throw new Error(stderr);

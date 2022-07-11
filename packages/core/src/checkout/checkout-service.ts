@@ -11,9 +11,10 @@ import { ConfigActionCreator } from '../config';
 import { CouponActionCreator, GiftCertificateActionCreator } from '../coupon';
 import { CustomerAccountRequestBody, CustomerActionCreator, CustomerAddressRequestBody, CustomerCredentials, CustomerInitializeOptions, CustomerRequestOptions, CustomerStrategyActionCreator, ExecutePaymentMethodCheckoutOptions, GuestCredentials } from '../customer';
 import { FormFieldsActionCreator } from '../form';
+import { PaymentInitializeOptions as PaymentInitializeOptionsV2 } from '../generated/payment-initialize-options';
 import { CountryActionCreator } from '../geography';
 import { OrderActionCreator, OrderRequestBody } from '../order';
-import { PaymentInitializeOptions, PaymentMethodActionCreator, PaymentRequestOptions, PaymentStrategyActionCreator } from '../payment';
+import { PaymentInitializeOptions as PaymentInitializeOptionsV1, PaymentMethodActionCreator, PaymentRequestOptions, PaymentStrategyActionCreator } from '../payment';
 import { InstrumentActionCreator } from '../payment/instrument';
 import { ConsignmentsRequestBody, ConsignmentActionCreator, ConsignmentAssignmentRequestBody, ConsignmentUpdateRequestBody, PickupOptionActionCreator, PickupOptionRequestBody, ShippingCountryActionCreator, ShippingInitializeOptions, ShippingRequestOptions, ShippingStrategyActionCreator } from '../shipping';
 import { SignInEmailActionCreator, SignInEmailRequestBody } from '../signin-email';
@@ -28,6 +29,8 @@ import CheckoutSelectors from './checkout-selectors';
 import CheckoutStore from './checkout-store';
 import { createCheckoutSelectorsFactory, CheckoutSelectorsFactory } from './create-checkout-selectors';
 import createCheckoutServiceErrorTransformer from './create-checkout-service-error-transformer';
+
+export type PaymentInitializeOptions = PaymentInitializeOptionsV1 & PaymentInitializeOptionsV2;
 
 /**
  * Responsible for completing the checkout process for the current customer.

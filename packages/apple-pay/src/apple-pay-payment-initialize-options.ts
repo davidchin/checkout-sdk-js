@@ -26,5 +26,5 @@ export default interface ApplePayPaymentInitializeOptions {
 }
 
 export interface WithApplePayPaymentInitializeOptions {
-    applepay: ApplePayPaymentInitializeOptions;
+    applepay?: ApplePayPaymentInitializeOptions;
 }

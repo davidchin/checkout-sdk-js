@@ -67,16 +67,14 @@
                 "passWithNoTests": true
             }
         },
-        "auto-export": {
+        "generate": {
             "executor": "@nrwl/workspace:run-commands",
             "options": {
-                "command": "nx workspace-generator auto-export --projectName=core"
-            }
-        },
-        "extend-interface": {
-            "executor": "@nrwl/workspace:run-commands",
-            "options": {
-                "command": "nx workspace-generator extend-interface --projectName=core"
+                "commands": [
+                    "npx nx workspace-generator auto-export --projectName=core",
+                    "npx nx workspace-generator extend-interface --projectName=core"
+                ],
+                "parallel": false
             }
         }
     },
