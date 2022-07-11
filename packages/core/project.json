@@ -10,6 +10,10 @@
             },
             "dependsOn": [
                 {
+                    "target": "generate",
+                    "projects": "self"
+                },
+                {
                     "target": "build",
                     "projects": "dependencies"
                 }
@@ -57,7 +61,13 @@
             "fix": true,
             "options": {
                 "lintFilePatterns": ["packages/core/**/*.ts"]
-            }
+            },
+            "dependsOn": [
+                {
+                    "target": "generate",
+                    "projects": "self"
+                }
+            ]
         },
         "test": {
             "executor": "@nrwl/jest:jest",

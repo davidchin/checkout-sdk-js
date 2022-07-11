@@ -30,7 +30,7 @@ import CheckoutStore from './checkout-store';
 import { createCheckoutSelectorsFactory, CheckoutSelectorsFactory } from './create-checkout-selectors';
 import createCheckoutServiceErrorTransformer from './create-checkout-service-error-transformer';
 
-export type PaymentInitializeOptions = PaymentInitializeOptionsV1 & PaymentInitializeOptionsV2;
+export type PaymentInitializeOptions = PaymentInitializeOptionsV2 & PaymentInitializeOptionsV1;
 
 /**
  * Responsible for completing the checkout process for the current customer.

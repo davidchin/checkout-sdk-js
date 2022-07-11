@@ -55,17 +55,6 @@ async function getBaseConfig() {
             new DefinePlugin({
                 'LIBRARY_VERSION': JSON.stringify(await getNextVersion()),
             }),
-            new BuildHookPlugin({
-                async onBeforeCompile() {
-                    const { stdout, stderr } = await promisify(exec)('npm run generate');
-
-                    if (stderr) {
-                        throw new Error(stderr);
-                    }
-
-                    console.log(stdout);
-                },
-            }),
         ],
     };
 };
