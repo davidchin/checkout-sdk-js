@@ -6,7 +6,6 @@
         "module": "commonjs",
         "lib": ["esnext"],
         "target": "esnext",
-        "sourceMap": false,
-        "strict": false
+        "sourceMap": false
     }
 }

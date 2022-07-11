@@ -14,59 +14,100 @@ export interface ExtendInterfaceOptions {
 
 export default async function extendInterface({
     inputPath,
-    // outputPath,
+    outputPath,
     memberPattern,
-    // targetPath,
-    // targetMemberPattern,
+    targetPath,
+    targetMemberName,
 }: ExtendInterfaceOptions): Promise<string> {
     const filePaths = await promisify(glob)(inputPath);
-    const sources = (await Promise.all(
-        filePaths.map(filePath => getSourceFromExport(filePath, memberPattern))
-    )).flatMap(sources => sources);
-
-    console.log(sources);
-
-    return '';
-
-    /*
-    const exportDeclarations = await Promise.all(
-        filePaths.map(filePath => createExportDeclaration(filePath, outputPath, memberPattern))
-    );
+    const importDeclarations = await Promise.all([
+        createImportDeclaration(targetPath, outputPath, targetMemberName, 'Base'),
+        ...filePaths.map(filePath => createImportDeclaration(filePath, outputPath, memberPattern))
+    ]);
+    const mergableMemberNames = importDeclarations.map(statement => statement?.importClause?.namedBindings)
+        .filter(exists)
+        .filter(ts.isNamedImports)
+        .flatMap(namedImports => namedImports.elements.map(element => element.name.escapedText.toString()));
 
     return ts.createPrinter()
         .printList(
             ts.ListFormat.MultiLine,
-            ts.factory.createNodeArray(exportDeclarations.filter(exists)),
+            ts.factory.createNodeArray([
+                ...importDeclarations,
+                createTypeAliasDeclaration(targetMemberName, mergableMemberNames),
+            ].filter(exists)),
             ts.createSourceFile(outputPath, '', ts.ScriptTarget.ESNext)
         );
-    */
 }
 
-async function getSourceFromExport(filePath: string, memberPattern: string): Promise<ts.SourceFile[]> {
+function createTypeAliasDeclaration(
+    aliasMemberName: string,
+    mergableMemberNames: string[],
+): ts.TypeAliasDeclaration {
+    return ts.factory.createTypeAliasDeclaration(
+        undefined,
+        [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+        ts.factory.createIdentifier(aliasMemberName),
+        undefined,
+        ts.factory.createIntersectionTypeNode(
+            mergableMemberNames.map(memberName =>
+                ts.factory.createTypeReferenceNode(
+                    ts.factory.createIdentifier(memberName),
+                    undefined
+                )
+            )
+        )
+    );
+}
+
+async function createImportDeclaration(
+    filePath: string,
+    outputPath: string,
+    memberPattern: string,
+    aliasPrefix?: string
+): Promise<ts.ImportDeclaration | undefined> {
     const root = await getSource(filePath);
-    const exportPaths = root.statements
+
+    const memberNames = root.statements
         .filter(ts.isExportDeclaration)
-        .filter(statement => {
+        .flatMap(statement => {
             if (!statement.exportClause ||
                 !ts.isNamedExports(statement.exportClause) ||
-                !statement.exportClause.elements?.filter(ts.isExportSpecifier)) {
-                return false;
+                !statement.exportClause.elements) {
+                return [];
             }
 
-            return statement.exportClause.elements.find(element =>
-                element.name.escapedText.toString()?.match(new RegExp(memberPattern))
-            );
+            return statement.exportClause.elements.filter(ts.isExportSpecifier);
         })
-        .map(statement => statement.moduleSpecifier)
-        .filter(exists)
-        .filter(ts.isStringLiteral)
-        .map(expression => expression.text);
+        .map(element => element.name.escapedText.toString())
+        .filter(memberName => memberName?.match(new RegExp(memberPattern)));
 
-        return Promise.all(
-            exportPaths.map(exportPath =>
-                getSource(path.resolve(path.dirname(filePath), `${exportPath}.ts`))
+    if (memberNames.length === 0) {
+        return;
+    }
+
+    return ts.factory.createImportDeclaration(
+        undefined,
+        undefined,
+        ts.factory.createImportClause(
+            false,
+            undefined,
+            ts.factory.createNamedImports(
+                memberNames.map(memberName =>
+                    aliasPrefix ?
+                        ts.factory.createImportSpecifier(
+                            ts.factory.createIdentifier(memberName),
+                            ts.factory.createIdentifier(`${aliasPrefix}${memberName}`)
+                        ) :
+                        ts.factory.createImportSpecifier(
+                            undefined,
+                            ts.factory.createIdentifier(memberName)
+                        )
+                )
             )
-        );
+        ),
+        ts.factory.createStringLiteral(getImportPath(filePath, outputPath), true)
+    );
 }
 
 async function getSource(filePath: string): Promise<ts.SourceFile> {
@@ -78,6 +119,16 @@ async function getSource(filePath: string): Promise<ts.SourceFile> {
         source,
         ts.ScriptTarget.Latest
     );
+}
+
+function getImportPath(filePath: string, outputPath: string): string {
+    const fileName = path.parse(filePath).name;
+    const outputFolder = path.parse(outputPath).dir;
+    const importFolder = path.parse(path.relative(outputFolder, filePath)).dir;
+
+    return fileName === 'index' ?
+        importFolder :
+        path.join(importFolder, fileName);
 }
 
 function exists<TValue>(value?: TValue): value is NonNullable<TValue> {

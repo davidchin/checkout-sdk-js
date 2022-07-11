@@ -33,13 +33,7 @@ async function createExportDeclaration(
     outputPath: string,
     memberPattern: string
 ): Promise<ts.ExportDeclaration | undefined> {
-    const readFile = promisify(fs.readFile);
-    const source = await readFile(filePath, { encoding: 'utf8' });
-    const root = ts.createSourceFile(
-        path.parse(filePath).name,
-        source,
-        ts.ScriptTarget.Latest
-    );
+    const root = await getSource(filePath);
 
     const memberNames = root.statements
         .filter(ts.isExportDeclaration)
@@ -71,6 +65,17 @@ async function createExportDeclaration(
                 )
             )),
         ts.factory.createStringLiteral(getImportPath(filePath, outputPath), true)
+    );
+}
+
+async function getSource(filePath: string): Promise<ts.SourceFile> {
+    const readFile = promisify(fs.readFile);
+    const source = await readFile(filePath, { encoding: 'utf8' });
+
+    return ts.createSourceFile(
+        path.parse(filePath).name,
+        source,
+        ts.ScriptTarget.Latest
     );
 }
 

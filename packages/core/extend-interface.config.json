@@ -4,7 +4,7 @@
             "inputPath": "packages/*/src/index.ts",
             "outputPath": "packages/core/src/generated/payment-initialize-options.ts",
             "memberPattern": "^With.+PaymentInitializeOptions$",
-            "targetPath": "packages/core/src/payment/payment-request-options.ts",
+            "targetPath": "packages/payment-integration/src/index.ts",
             "targetMemberName": "PaymentInitializeOptions"
         }
     ]
