@@ -11,6 +11,7 @@ import StepTracker from './step-tracker';
 /**
  * Creates an instance of `StepTracker`.
  *
+ * @alpha
  * @remarks
  * ```js
  * const checkoutService = createCheckoutService();

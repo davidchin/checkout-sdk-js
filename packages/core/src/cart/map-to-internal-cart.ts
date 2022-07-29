@@ -9,6 +9,7 @@ import InternalCart from './internal-cart';
 import mapToInternalLineItems from './map-to-internal-line-items';
 
 /**
+ * @internal
  * @deprecated This mapper is only for internal use only. It is required during
  * the transition period as we are moving to adopt the new storefront API object
  * schema.
