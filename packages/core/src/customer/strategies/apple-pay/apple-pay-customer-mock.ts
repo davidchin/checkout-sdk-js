@@ -1,4 +1,4 @@
-import { CustomerInitializeOptions } from '../../customer-request-options';
+import { CustomerInitializeOptions } from "../../customer-request-options";
 
 export function getApplePayCustomerInitializationOptions(): CustomerInitializeOptions {
     return {

@@ -11,7 +11,7 @@ import Payment from '../../payment';
 import PaymentActionCreator from '../../payment-action-creator';
 import PaymentMethod from '../../payment-method';
 import PaymentMethodActionCreator from '../../payment-method-action-creator';
-import { PaymentInitializeOptions, PaymentRequestOptions } from '../../payment-request-options';
+import { PaymentRequestOptions, PaymentInitializeOptions } from '../../payment-request-options';
 import PaymentStrategy from '../payment-strategy';
 
 import ApplePaySessionFactory from './apple-pay-session-factory';
