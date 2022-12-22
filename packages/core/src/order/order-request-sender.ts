@@ -1,5 +1,6 @@
 import { RequestSender, Response } from '@bigcommerce/request-sender';
 import { isNil, omitBy } from 'lodash';
+import { CartInconsistencyError } from '../cart/errors';
 
 import {
     ContentType,
@@ -70,6 +71,10 @@ export default class OrderRequestSender {
             .catch((error) => {
                 if (error.body.type === 'tax_provider_unavailable') {
                     throw new OrderTaxProviderUnavailableError();
+                }
+
+                if (error.body.type === 'cart_has_changed') {
+                    throw new CartInconsistencyError();
                 }
 
                 throw error;
