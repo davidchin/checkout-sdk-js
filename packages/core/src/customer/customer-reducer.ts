@@ -1,7 +1,12 @@
 import { combineReducers, composeReducers } from '@bigcommerce/data-store';
 
 import { BillingAddressActionType, ContinueAsGuestAction } from '../billing';
-import { CheckoutAction, CheckoutActionType } from '../checkout';
+import {
+    CheckoutAction,
+    CheckoutActionType,
+    CheckoutHydrateAction,
+    CheckoutHydrateActionType,
+} from '../checkout';
 import { clearErrorReducer } from '../common/error';
 import { objectMerge, objectSet } from '../common/utility';
 
@@ -21,7 +26,8 @@ type ReducerActionType =
     | CheckoutAction
     | ContinueAsGuestAction
     | CustomerAction
-    | StripeLinkAuthenticatedAction;
+    | StripeLinkAuthenticatedAction
+    | CheckoutHydrateAction;
 
 export default function customerReducer(
     state: CustomerState = DEFAULT_STATE,
@@ -47,6 +53,9 @@ function dataReducer(data: Customer | undefined, action: ReducerActionType): Cus
 
         case CustomerActionType.StripeLinkAuthenticated:
             return objectSet(data, 'isStripeLinkAuthenticated', action.payload);
+
+        case CheckoutHydrateActionType.HydrateInitialState:
+            return objectMerge(data, action.payload?.checkout.customer);
 
         default:
             return data;

@@ -60,6 +60,8 @@ import CheckoutParams from './checkout-params';
 import CheckoutSelectors from './checkout-selectors';
 import CheckoutStore from './checkout-store';
 import createCheckoutServiceErrorTransformer from './create-checkout-service-error-transformer';
+import CheckoutInitialState from './checkout-initial-state';
+import { CheckoutHydrateActionType } from './checkout-hydrate-actions';
 
 /**
  * Responsible for completing the checkout process for the current customer.
@@ -173,6 +175,13 @@ export default class CheckoutService {
         ...filters: Array<(state: CheckoutSelectors) => any>
     ): () => void {
         return this._storeProjection.subscribe(subscriber, ...filters);
+    }
+
+    hydrate(initialState: CheckoutInitialState): Promise<CheckoutSelectors> {
+        return this._dispatch({
+            type: CheckoutHydrateActionType.HydrateInitialState,
+            payload: initialState,
+        });
     }
 
     /**
