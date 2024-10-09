@@ -1,3 +1,4 @@
+import { decode, encode } from 'html-entities';
 import { FormatError, IntlMessageFormat } from 'intl-messageformat';
 import { isObject, union } from 'lodash';
 import MessageFormat from 'messageformat';
@@ -106,7 +107,7 @@ export default class LanguageService {
         if (this._isCspNonceExperimentEnabled) {
             if (!this._formatters[prefixedKey]) {
                 this._formatters[prefixedKey] = new IntlMessageFormat(
-                    this._translations[prefixedKey] || '',
+                    encode(this._translations[prefixedKey] || ''),
                     this._locales[prefixedKey],
                     undefined,
                     { ignoreTag: true },
@@ -114,10 +115,10 @@ export default class LanguageService {
             }
 
             try {
-                return this._formatters[prefixedKey].format(this._transformData(data));
+                return decode(this._formatters[prefixedKey].format(this._transformData(data)));
             } catch (error) {
                 if (this._isFormatError(error)) {
-                    return error.originalMessage ?? '';
+                    return decode(error.originalMessage ?? '');
                 }
 
                 throw error;

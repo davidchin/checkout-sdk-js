@@ -26,6 +26,8 @@ describe('LanguageService', () => {
                 'optimized_checkout.test.email_label': 'Email Address',
                 'optimized_checkout.test.order_number_text': 'Your order number is {orderNumber}',
                 'optimized_checkout.test.thank_you_text': '<strong>Thank you<strong>',
+                'optimized_checkout.test.link_single_quote_text':
+                    "Check <a href='/terms-and-conditions/' target='blank'>T&C</a>",
             },
         };
 
@@ -54,6 +56,12 @@ describe('LanguageService', () => {
 
         it('returns translated HTML strings', () => {
             expect(langService.translate('test.thank_you_text')).toBe('<strong>Thank you<strong>');
+        });
+
+        it('returns translated HTML strings with special ICU characters', () => {
+            expect(langService.translate('test.link_single_quote_text')).toBe(
+                "Check <a href='/terms-and-conditions/' target='blank'>T&C</a>",
+            );
         });
 
         it('returns template string when values are missing for template variables', () => {
