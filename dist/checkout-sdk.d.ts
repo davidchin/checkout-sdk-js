@@ -5771,6 +5771,7 @@ declare class LanguageService {
     private _flattenObject;
     private _transformData;
     private _hasTranslations;
+    private _isFormatError;
 }
 
 declare interface LineItem {
